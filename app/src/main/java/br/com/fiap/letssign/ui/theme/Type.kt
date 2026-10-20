@@ -14,6 +14,11 @@ val Manrope = FontFamily(
     Font(R.font.manrope_extrabold, FontWeight.ExtraBold)
 )
 
+/** Fonte cursiva para a assinatura digitada. */
+val Cursiva = FontFamily(
+    Font(R.font.greatvibes_regular, FontWeight.Normal)
+)
+
 private val base = Typography()
 
 /** Manrope em todos os estilos: ExtraBold/Bold nos títulos, Regular nos textos. */

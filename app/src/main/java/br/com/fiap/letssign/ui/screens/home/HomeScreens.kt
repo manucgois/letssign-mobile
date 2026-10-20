@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Draw
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun AdminHomeScreen(
     onLogout: () -> Unit,
+    onOpenSignature: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val user by viewModel.currentUser.collectAsStateWithLifecycle()
@@ -33,6 +37,7 @@ fun AdminHomeScreen(
         titulo = "Área do Administrador",
         nome = user?.nomeCompleto.orEmpty(),
         descricao = "Aqui ficarão o dashboard, os documentos e o cadastro de signatários.",
+        onOpenSignature = onOpenSignature,
         onLogout = {
             viewModel.logout()
             onLogout()
@@ -43,6 +48,7 @@ fun AdminHomeScreen(
 @Composable
 fun SignerHomeScreen(
     onLogout: () -> Unit,
+    onOpenSignature: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val user by viewModel.currentUser.collectAsStateWithLifecycle()
@@ -50,6 +56,7 @@ fun SignerHomeScreen(
         titulo = "Área do Signatário",
         nome = user?.nomeCompleto.orEmpty(),
         descricao = "Aqui ficarão os documentos pendentes e os já assinados.",
+        onOpenSignature = onOpenSignature,
         onLogout = {
             viewModel.logout()
             onLogout()
@@ -62,6 +69,7 @@ private fun HomePlaceholder(
     titulo: String,
     nome: String,
     descricao: String,
+    onOpenSignature: () -> Unit,
     onLogout: () -> Unit
 ) {
     Scaffold { innerPadding ->
@@ -84,10 +92,16 @@ private fun HomePlaceholder(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(32.dp))
+            Button(onClick = onOpenSignature) {
+                Icon(Icons.Outlined.Draw, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Minha assinatura")
+            }
+            Spacer(Modifier.height(12.dp))
             OutlinedButton(onClick = onLogout) {
                 Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
-                Spacer(Modifier.height(0.dp))
-                Text("  Sair")
+                Spacer(Modifier.width(8.dp))
+                Text("Sair")
             }
         }
     }

@@ -111,3 +111,28 @@ fun SignaturePad(
         }
     }
 }
+
+/** Mostra, em miniatura, o que foi desenhado no quadro (usado na prévia do carimbo). */
+@Composable
+fun SignaturePreview(
+    state: SignaturePadState,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Black
+) {
+    Canvas(modifier = modifier) {
+        val origem = state.size
+        if (origem.width == 0 || origem.height == 0) return@Canvas
+        val escala = minOf(size.width / origem.width, size.height / origem.height)
+        val estilo = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+        state.strokes.forEach { pontos ->
+            if (pontos.size > 1) {
+                val path = Path().apply {
+                    moveTo(pontos.first().x * escala, pontos.first().y * escala)
+                    pontos.drop(1).forEach { lineTo(it.x * escala, it.y * escala) }
+                }
+                drawPath(path = path, color = color, style = estilo)
+            }
+        }
+    }
+}
