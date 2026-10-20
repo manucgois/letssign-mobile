@@ -9,6 +9,8 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import br.com.fiap.letssign.data.repository.RoomSignatureProfileRepository
+import br.com.fiap.letssign.domain.repository.SignatureProfileRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -21,4 +23,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUserRepository(impl: RoomUserRepository): UserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSignatureProfileRepository(
+        impl: RoomSignatureProfileRepository
+    ): SignatureProfileRepository
 }
