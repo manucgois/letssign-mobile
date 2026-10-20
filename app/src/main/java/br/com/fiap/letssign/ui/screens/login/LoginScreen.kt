@@ -47,7 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.com.fiap.letssign.data.local.entity.UserEntity
-import br.com.fiap.letssign.ui.theme.LetsSignMobileTheme
+import br.com.fiap.letssign.ui.theme.RatificaTheme
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
+import br.com.fiap.letssign.R
+import br.com.fiap.letssign.ui.theme.AzulRatifica
 
 /** Versão "com estado": conversa com o ViewModel. */
 @Composable
@@ -98,22 +105,28 @@ fun LoginContent(
         ) {
             Spacer(Modifier.height(64.dp))
 
-            Icon(
-                imageVector = Icons.Outlined.Draw,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(64.dp)
-            )
-            Spacer(Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .background(AzulRatifica, RoundedCornerShape(24.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_ratifica_mark),
+                    contentDescription = "Logo Ratifica",
+                    modifier = Modifier.size(56.dp)
+                )
+            }
+            Spacer(Modifier.height(20.dp))
             Text(
-                text = "LetsSign Mobile",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                text = "Ratifica",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Prepare, envie e assine documentos com segurança",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "Seu contrato ratificado na palma da mão.",
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
@@ -235,7 +248,7 @@ fun LoginContent(
 @Preview(showBackground = true)
 @Composable
 private fun LoginPreview() {
-    LetsSignMobileTheme {
+    RatificaTheme {
         LoginContent(
             state = LoginUiState(),
             onEmailChange = {},
