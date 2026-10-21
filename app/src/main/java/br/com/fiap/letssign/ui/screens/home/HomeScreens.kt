@@ -26,12 +26,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.outlined.NoteAdd
 
 @Composable
 fun AdminHomeScreen(
     onLogout: () -> Unit,
     onOpenSignature: () -> Unit,
     onOpenSigners: () -> Unit,
+    onNewDocument: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val user by viewModel.currentUser.collectAsStateWithLifecycle()
@@ -45,6 +47,12 @@ fun AdminHomeScreen(
             onLogout()
         },
         acoesExtras = {
+            Button(onClick = onNewDocument) {
+                Icon(Icons.Outlined.NoteAdd, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Novo documento")
+            }
+            Spacer(Modifier.height(12.dp))
             Button(onClick = onOpenSigners) {
                 Icon(Icons.Outlined.Group, contentDescription = null)
                 Spacer(Modifier.width(8.dp))

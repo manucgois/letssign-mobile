@@ -14,6 +14,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import br.com.fiap.letssign.ui.screens.signers.SignerFormScreen
 import br.com.fiap.letssign.ui.screens.signers.SignersListScreen
+import br.com.fiap.letssign.ui.screens.document.NewDocumentScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -66,7 +67,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             AdminHomeScreen(
                 onLogout = { irParaLogin() },
                 onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
-                onOpenSigners = { navController.navigate(Routes.SIGNERS) }
+                onOpenSigners = { navController.navigate(Routes.SIGNERS) },
+                onNewDocument = { navController.navigate(Routes.NEW_DOCUMENT) }
             )
         }
 
@@ -75,6 +77,14 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onBack = { navController.popBackStack() },
                 onNovo = { navController.navigate(Routes.signerForm()) },
                 onEditar = { id -> navController.navigate(Routes.signerForm(id)) }
+            )
+        }
+
+        composable(Routes.NEW_DOCUMENT) {
+            NewDocumentScreen(
+                onBack = { navController.popBackStack() },
+                // Provisório: na próxima etapa, vai para "Signatários" deste documento
+                onCreated = { navController.popBackStack() }
             )
         }
 
