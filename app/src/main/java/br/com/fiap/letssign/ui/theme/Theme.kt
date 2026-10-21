@@ -23,7 +23,14 @@ private val LightColors = lightColorScheme(
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
     outline = LightOutline,
-    error = LightError
+    error = LightError,
+    surfaceContainerLowest = androidx.compose.ui.graphics.Color(0xFFFFFFFF),
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFFF8FAFC),
+    surfaceContainer = androidx.compose.ui.graphics.Color(0xFFEEF2F7),
+    surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFFE8EDF3),
+    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFFE1E7EF),
+    surfaceBright = androidx.compose.ui.graphics.Color(0xFFFFFFFF),
+    surfaceDim = androidx.compose.ui.graphics.Color(0xFFD9E0E9),
 )
 
 private val DarkColors = darkColorScheme(
@@ -43,7 +50,14 @@ private val DarkColors = darkColorScheme(
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
     outline = DarkOutline,
-    error = DarkError
+    error = DarkError,
+    surfaceContainerLowest = androidx.compose.ui.graphics.Color(0xFF08121F),
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFF0F1B2D),
+    surfaceContainer = androidx.compose.ui.graphics.Color(0xFF13233A),
+    surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFF1A2B44),
+    surfaceContainerHighest = androidx.compose.ui.graphics.Color(0xFF22344F),
+    surfaceBright = androidx.compose.ui.graphics.Color(0xFF2A3B55),
+    surfaceDim = androidx.compose.ui.graphics.Color(0xFF0B1726),
 )
 
 /**

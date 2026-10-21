@@ -220,7 +220,7 @@ private fun CardResumo(
         border = if (selecionado) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
         colors = CardDefaults.cardColors(
             containerColor = if (selecionado) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surface
+            else MaterialTheme.colorScheme.surfaceContainerHighest
         )
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -265,18 +265,22 @@ private fun DocumentoCard(item: DocumentListItem, onClick: () -> Unit) {
 
             val progresso = when {
                 item.totalSignatarios == 0 -> "Sem signatários"
-                doc.status == DocumentStatus.RASCUNHO -> "${item.totalSignatarios} signatário(s)"
-                else -> "${item.assinados} de ${item.totalSignatarios} assinatura(s)"
+                doc.status == DocumentStatus.RASCUNHO ->
+                    plural(item.totalSignatarios, "signatário", "signatários")
+                else ->
+                    "${item.assinados} de ${plural(item.totalSignatarios, "assinatura", "assinaturas")}"
             }
             Text(
-                "${doc.quantidadePaginas} página(s) · $progresso",
+                "${plural(doc.quantidadePaginas, "página", "páginas")} · $progresso",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            val concluidoEm = doc.concluidoEm
+            val enviadoEm = doc.enviadoEm
             val dataTexto = when {
-                doc.concluidoEm != null -> "Concluído em ${DateFormatter.dataHora(doc.concluidoEm)}"
-                doc.enviadoEm != null -> "Enviado em ${DateFormatter.dataHora(doc.enviadoEm)}"
+                concluidoEm != null -> "Concluído em ${DateFormatter.dataHora(concluidoEm)}"
+                enviadoEm != null -> "Enviado em ${DateFormatter.dataHora(enviadoEm)}"
                 else -> "Criado em ${DateFormatter.dataHora(doc.criadoEm)}"
             }
             Text(
@@ -321,3 +325,7 @@ private fun EstadoVazio(titulo: String, texto: String) {
         )
     }
 }
+
+/** Ex.: plural(1, "página", "páginas") = "1 página"; plural(3, ...) = "3 páginas" */
+private fun plural(n: Int, singular: String, plural: String): String =
+    "$n ${if (n == 1) singular else plural}"

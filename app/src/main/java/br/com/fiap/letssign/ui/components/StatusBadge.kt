@@ -20,7 +20,7 @@ private val AmbarTexto = Color(0xFF5C3B00)
 fun StatusBadge(status: DocumentStatus, modifier: Modifier = Modifier) {
     val cores = MaterialTheme.colorScheme
     val (fundo, texto) = when (status) {
-        DocumentStatus.RASCUNHO -> cores.surfaceVariant to cores.onSurfaceVariant
+        DocumentStatus.RASCUNHO -> cores.surface to cores.onSurfaceVariant
         DocumentStatus.ENVIADO -> cores.primaryContainer to cores.onPrimaryContainer
         DocumentStatus.PARCIALMENTE_ASSINADO -> AmbarFundo to AmbarTexto
         DocumentStatus.CONCLUIDO -> cores.secondaryContainer to cores.onSecondaryContainer
