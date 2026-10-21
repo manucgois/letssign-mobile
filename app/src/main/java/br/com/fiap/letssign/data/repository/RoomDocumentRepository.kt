@@ -23,6 +23,7 @@ import br.com.fiap.letssign.data.local.entity.DocumentSignerEntity
 import br.com.fiap.letssign.data.local.entity.SignerWithUser
 import br.com.fiap.letssign.domain.model.DocumentStatus
 import br.com.fiap.letssign.domain.model.SignerRole
+import br.com.fiap.letssign.data.local.entity.DocumentListItem
 
 class RoomDocumentRepository @Inject constructor(
     private val database: AppDatabase,
@@ -172,4 +173,7 @@ class RoomDocumentRepository @Inject constructor(
         }
         signerDao.update(atual.copy(userId = novoUserId))
     }
+
+    override fun observeMyDocumentsWithProgress(ownerId: Long): Flow<List<DocumentListItem>> =
+        documentDao.observeByOwnerWithProgress(ownerId)
 }

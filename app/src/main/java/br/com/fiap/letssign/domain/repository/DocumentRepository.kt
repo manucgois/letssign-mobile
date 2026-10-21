@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import br.com.fiap.letssign.data.local.entity.DocumentSignerEntity
 import br.com.fiap.letssign.data.local.entity.SignerWithUser
 import br.com.fiap.letssign.domain.model.SignerRole
+import br.com.fiap.letssign.data.local.entity.DocumentListItem
 
 interface DocumentRepository {
     fun observeMyDocuments(ownerId: Long): Flow<List<DocumentEntity>>
@@ -23,6 +24,8 @@ interface DocumentRepository {
 
     // ----- Etapa 2: participantes (só enquanto o documento for RASCUNHO) -----
     fun observeParticipants(documentId: Long): Flow<List<SignerWithUser>>
+
+    fun observeMyDocumentsWithProgress(ownerId: Long): Flow<List<DocumentListItem>>
 
     suspend fun addParticipant(documentId: Long, ownerId: Long, userId: Long, papel: SignerRole): Result<Unit>
     suspend fun updateParticipant(ownerId: Long, participante: DocumentSignerEntity): Result<Unit>

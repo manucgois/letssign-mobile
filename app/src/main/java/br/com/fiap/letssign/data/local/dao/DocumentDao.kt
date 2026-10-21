@@ -8,6 +8,7 @@ import br.com.fiap.letssign.data.local.entity.DocumentEntity
 import br.com.fiap.letssign.data.local.entity.SignerDocumentItem
 import br.com.fiap.letssign.data.local.entity.StatusCount
 import kotlinx.coroutines.flow.Flow
+import br.com.fiap.letssign.data.local.entity.DocumentListItem
 
 @Dao
 interface DocumentDao {
@@ -71,4 +72,19 @@ interface DocumentDao {
         """
     )
     fun observeStatusCounts(ownerId: Long): Flow<List<StatusCount>>
+
+    /** Documentos do admin com o progresso: "2 de 3 assinaturas". */
+    @Query(
+        """
+        SELECT d.*,
+            (SELECT COUNT(*) FROM document_signers s WHERE s.documentId = d.id) AS totalSignatarios,
+            (SELECT COUNT(*) FROM document_signers s
+                WHERE s.documentId = d.id AND s.status = 'ASSINADO') AS assinados
+        FROM documents d
+        WHERE d.ownerId = :ownerId
+        ORDER BY d.criadoEm DESC
+        """
+    )
+    fun observeByOwnerWithProgress(ownerId: Long): Flow<List<DocumentListItem>>
+
 }

@@ -27,3 +27,10 @@ data class StatusCount(
     val status: DocumentStatus,
     val total: Int
 )
+
+/** Documento na lista do admin + quantas pessoas assinam e quantas já assinaram. */
+data class DocumentListItem(
+    @Embedded val document: DocumentEntity,
+    val totalSignatarios: Int,
+    val assinados: Int
+)

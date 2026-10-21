@@ -6,7 +6,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.letssign.domain.model.UserRole
-import br.com.fiap.letssign.ui.screens.home.AdminHomeScreen
 import br.com.fiap.letssign.ui.screens.home.SignerHomeScreen
 import br.com.fiap.letssign.ui.screens.login.LoginScreen
 import br.com.fiap.letssign.ui.screens.signature.SignatureSetupScreen
@@ -16,6 +15,7 @@ import br.com.fiap.letssign.ui.screens.signers.SignerFormScreen
 import br.com.fiap.letssign.ui.screens.signers.SignersListScreen
 import br.com.fiap.letssign.ui.screens.document.NewDocumentScreen
 import br.com.fiap.letssign.ui.screens.document.DocumentSignersScreen
+import br.com.fiap.letssign.ui.screens.admin.AdminDashboardScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -65,11 +65,19 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         composable(Routes.ADMIN_HOME) {
-            AdminHomeScreen(
-                onLogout = { irParaLogin() },
-                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
+            val context = androidx.compose.ui.platform.LocalContext.current
+            AdminDashboardScreen(
+                onNewDocument = { navController.navigate(Routes.NEW_DOCUMENT) },
                 onOpenSigners = { navController.navigate(Routes.SIGNERS) },
-                onNewDocument = { navController.navigate(Routes.NEW_DOCUMENT) }
+                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
+                onContinueDraft = { id -> navController.navigate(Routes.documentSigners(id)) },
+                // Provisório: depois abre a tela de acompanhamento
+                onOpenDocument = {
+                    android.widget.Toast.makeText(
+                        context, "Acompanhamento: em breve!", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onLogout = { irParaLogin() }
             )
         }
 
