@@ -16,6 +16,7 @@ import br.com.fiap.letssign.ui.screens.signers.SignersListScreen
 import br.com.fiap.letssign.ui.screens.document.NewDocumentScreen
 import br.com.fiap.letssign.ui.screens.document.DocumentSignersScreen
 import br.com.fiap.letssign.ui.screens.admin.AdminDashboardScreen
+import br.com.fiap.letssign.ui.screens.splash.SplashScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -29,7 +30,18 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
     }
 
-    NavHost(navController = navController, startDestination = Routes.LOGIN) {
+    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onFinished = {
+                    navController.navigate(Routes.LOGIN) {
+                        // A splash sai do histórico: o "voltar" no login fecha o app
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
 
         composable(Routes.LOGIN) {
             LoginScreen(

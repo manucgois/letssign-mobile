@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.LetsSignMobile" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.LetsSignMobile" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Fundo azul enquanto o app carrega (evita o "flash" branco) -->
+        <item name="android:windowBackground">@color/azul_ratifica</item>
+
+        <!-- Android 12+: a abertura do sistema fica só azul, emendando na nossa splash -->
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/azul_ratifica</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@drawable/splash_vazio</item>
+    </style>
+
 </resources>
