@@ -10,6 +10,10 @@ import br.com.fiap.letssign.ui.screens.home.AdminHomeScreen
 import br.com.fiap.letssign.ui.screens.home.SignerHomeScreen
 import br.com.fiap.letssign.ui.screens.login.LoginScreen
 import br.com.fiap.letssign.ui.screens.signature.SignatureSetupScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import br.com.fiap.letssign.ui.screens.signers.SignerFormScreen
+import br.com.fiap.letssign.ui.screens.signers.SignersListScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -61,7 +65,31 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable(Routes.ADMIN_HOME) {
             AdminHomeScreen(
                 onLogout = { irParaLogin() },
-                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) }
+                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
+                onOpenSigners = { navController.navigate(Routes.SIGNERS) }
+            )
+        }
+
+        composable(Routes.SIGNERS) {
+            SignersListScreen(
+                onBack = { navController.popBackStack() },
+                onNovo = { navController.navigate(Routes.signerForm()) },
+                onEditar = { id -> navController.navigate(Routes.signerForm(id)) }
+            )
+        }
+
+        composable(
+            route = Routes.SIGNER_FORM,
+            arguments = listOf(
+                navArgument("signerId") {
+                    type = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) {
+            SignerFormScreen(
+                onDone = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
             )
         }
 

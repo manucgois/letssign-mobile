@@ -51,4 +51,36 @@ object Validators {
                 if (numero.trim().length >= 3) null else "Número muito curto"
         }
     }
+
+    fun isValidEmail(value: String): Boolean =
+        android.util.Patterns.EMAIL_ADDRESS.matcher(value.trim()).matches()
+
+    fun validateFullName(value: String): String? = when {
+        value.isBlank() -> "Informe o nome completo"
+        value.trim().split(Regex("\\s+")).size < 2 -> "Informe nome e sobrenome"
+        else -> null
+    }
+
+    fun validatePhone(value: String): String? {
+        val digitos = onlyDigits(value)
+        return if (digitos.length == 10 || digitos.length == 11) null
+        else "Informe DDD + número, ex.: (31) 99999-0000"
+    }
+
+    /** Formata para exibição: (31) 99999-0000 ou (31) 3333-0000 */
+    fun formatPhone(value: String): String {
+        val d = onlyDigits(value)
+        return when (d.length) {
+            11 -> "(${d.take(2)}) ${d.substring(2, 7)}-${d.substring(7)}"
+            10 -> "(${d.take(2)}) ${d.substring(2, 6)}-${d.substring(6)}"
+            else -> value.trim()
+        }
+    }
+
+    /** Senha forte: mínimo 8 caracteres, com letras e números. */
+    fun validatePassword(value: String): String? = when {
+        value.length < 8 -> "Mínimo de 8 caracteres"
+        !value.any { it.isLetter() } || !value.any { it.isDigit() } -> "Use letras e números"
+        else -> null
+    }
 }

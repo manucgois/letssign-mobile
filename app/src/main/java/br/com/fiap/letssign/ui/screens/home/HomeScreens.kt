@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Draw
+import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,17 +31,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun AdminHomeScreen(
     onLogout: () -> Unit,
     onOpenSignature: () -> Unit,
+    onOpenSigners: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val user by viewModel.currentUser.collectAsStateWithLifecycle()
     HomePlaceholder(
         titulo = "Área do Administrador",
         nome = user?.nomeCompleto.orEmpty(),
-        descricao = "Aqui ficarão o dashboard, os documentos e o cadastro de signatários.",
+        descricao = "Aqui ficarão o dashboard e os documentos.",
         onOpenSignature = onOpenSignature,
         onLogout = {
             viewModel.logout()
             onLogout()
+        },
+        acoesExtras = {
+            Button(onClick = onOpenSigners) {
+                Icon(Icons.Outlined.Group, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Signatários")
+            }
+            Spacer(Modifier.height(12.dp))
         }
     )
 }
@@ -70,7 +80,8 @@ private fun HomePlaceholder(
     nome: String,
     descricao: String,
     onOpenSignature: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    acoesExtras: @Composable () -> Unit = {}
 ) {
     Scaffold { innerPadding ->
         Column(
@@ -81,9 +92,17 @@ private fun HomePlaceholder(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Olá, $nome!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                "Olá, $nome!",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(Modifier.height(8.dp))
-            Text(titulo, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Text(
+                titulo,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
             Spacer(Modifier.height(16.dp))
             Text(
                 descricao,
@@ -92,6 +111,9 @@ private fun HomePlaceholder(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(32.dp))
+
+            acoesExtras()
+
             Button(onClick = onOpenSignature) {
                 Icon(Icons.Outlined.Draw, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
