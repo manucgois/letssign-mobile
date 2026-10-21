@@ -9,8 +9,12 @@ object Routes {
     const val SIGNERS = "signers"
     const val SIGNER_FORM = "signer_form?signerId={signerId}"
     const val NEW_DOCUMENT = "new_document"
+    const val DOCUMENT_SIGNERS = "document/{documentId}/signers"
 
     /** Monta a rota do formulário: sem id = novo; com id = editar. */
     fun signerForm(id: Long? = null): String =
         if (id == null) "signer_form" else "signer_form?signerId=$id"
+
+    fun documentSigners(documentId: Long): String = "document/$documentId/signers"
+
 }

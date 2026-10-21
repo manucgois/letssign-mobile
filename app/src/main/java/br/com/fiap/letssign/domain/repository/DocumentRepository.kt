@@ -4,6 +4,9 @@ import android.net.Uri
 import br.com.fiap.letssign.data.file.PdfInfo
 import br.com.fiap.letssign.data.local.entity.DocumentEntity
 import kotlinx.coroutines.flow.Flow
+import br.com.fiap.letssign.data.local.entity.DocumentSignerEntity
+import br.com.fiap.letssign.data.local.entity.SignerWithUser
+import br.com.fiap.letssign.domain.model.SignerRole
 
 interface DocumentRepository {
     fun observeMyDocuments(ownerId: Long): Flow<List<DocumentEntity>>
@@ -17,4 +20,13 @@ interface DocumentRepository {
 
     /** Etapa 1: copia o PDF, calcula o hash e cria o documento como RASCUNHO. */
     suspend fun createDraft(ownerId: Long, titulo: String, uri: Uri): Result<Long>
+
+    // ----- Etapa 2: participantes (só enquanto o documento for RASCUNHO) -----
+    fun observeParticipants(documentId: Long): Flow<List<SignerWithUser>>
+
+    suspend fun addParticipant(documentId: Long, ownerId: Long, userId: Long, papel: SignerRole): Result<Unit>
+    suspend fun updateParticipant(ownerId: Long, participante: DocumentSignerEntity): Result<Unit>
+    suspend fun removeParticipant(ownerId: Long, participante: DocumentSignerEntity): Result<Unit>
+    suspend fun replaceParticipant(ownerId: Long, participanteId: Long, novoUserId: Long): Result<Unit>
+
 }

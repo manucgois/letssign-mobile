@@ -15,6 +15,7 @@ import androidx.navigation.navArgument
 import br.com.fiap.letssign.ui.screens.signers.SignerFormScreen
 import br.com.fiap.letssign.ui.screens.signers.SignersListScreen
 import br.com.fiap.letssign.ui.screens.document.NewDocumentScreen
+import br.com.fiap.letssign.ui.screens.document.DocumentSignersScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -83,8 +84,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable(Routes.NEW_DOCUMENT) {
             NewDocumentScreen(
                 onBack = { navController.popBackStack() },
-                // Provisório: na próxima etapa, vai para "Signatários" deste documento
-                onCreated = { navController.popBackStack() }
+                onCreated = { id ->
+                    navController.navigate(Routes.documentSigners(id)) {
+                        // Remove a Etapa 1 do histórico: o "voltar" não recria o rascunho
+                        popUpTo(Routes.NEW_DOCUMENT) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -107,6 +112,24 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             SignerHomeScreen(
                 onLogout = { irParaLogin() },
                 onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) }
+            )
+        }
+
+        composable(
+            route = Routes.DOCUMENT_SIGNERS,
+            arguments = listOf(navArgument("documentId") { type = NavType.LongType })
+        ) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            DocumentSignersScreen(
+                onBack = { navController.popBackStack() },
+                // Provisório: na próxima etapa, vai para "Campos de assinatura"
+                onContinue = {
+                    android.widget.Toast.makeText(
+                        context, "Signatários salvos! Próxima etapa: campos.", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    navController.popBackStack()
+                },
+                onCadastrarNovo = { navController.navigate(Routes.signerForm()) }
             )
         }
     }
