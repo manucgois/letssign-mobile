@@ -8,6 +8,8 @@ import br.com.fiap.letssign.data.local.entity.DocumentSignerEntity
 import br.com.fiap.letssign.data.local.entity.SignerWithUser
 import br.com.fiap.letssign.domain.model.SignerRole
 import br.com.fiap.letssign.data.local.entity.DocumentListItem
+import android.graphics.Bitmap
+import br.com.fiap.letssign.data.local.entity.SignatureFieldEntity
 
 interface DocumentRepository {
     fun observeMyDocuments(ownerId: Long): Flow<List<DocumentEntity>>
@@ -31,5 +33,14 @@ interface DocumentRepository {
     suspend fun updateParticipant(ownerId: Long, participante: DocumentSignerEntity): Result<Unit>
     suspend fun removeParticipant(ownerId: Long, participante: DocumentSignerEntity): Result<Unit>
     suspend fun replaceParticipant(ownerId: Long, participanteId: Long, novoUserId: Long): Result<Unit>
+
+    // ----- Etapa 3: campos de assinatura -----
+    fun observeFields(documentId: Long): Flow<List<SignatureFieldEntity>>
+    suspend fun addField(ownerId: Long, campo: SignatureFieldEntity): Result<Long>
+    suspend fun updateField(ownerId: Long, campo: SignatureFieldEntity): Result<Unit>
+    suspend fun deleteField(ownerId: Long, campo: SignatureFieldEntity): Result<Unit>
+
+    /** Desenha uma página do PDF como imagem (só para quem tem acesso ao documento). */
+    suspend fun renderPage(documentId: Long, userId: Long, pagina: Int, larguraPx: Int): Bitmap?
 
 }

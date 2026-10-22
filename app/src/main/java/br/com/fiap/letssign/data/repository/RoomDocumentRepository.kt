@@ -24,12 +24,16 @@ import br.com.fiap.letssign.data.local.entity.SignerWithUser
 import br.com.fiap.letssign.domain.model.DocumentStatus
 import br.com.fiap.letssign.domain.model.SignerRole
 import br.com.fiap.letssign.data.local.entity.DocumentListItem
+import android.graphics.Bitmap
+import br.com.fiap.letssign.data.local.dao.SignatureFieldDao
+import br.com.fiap.letssign.data.local.entity.SignatureFieldEntity
 
 class RoomDocumentRepository @Inject constructor(
     private val database: AppDatabase,
     private val documentDao: DocumentDao,
     private val auditEventDao: AuditEventDao,
     private val signerDao: DocumentSignerDao,
+    private val fieldDao: SignatureFieldDao,
     private val storage: DocumentFileStorage
 ) : DocumentRepository {
 
@@ -96,8 +100,9 @@ class RoomDocumentRepository @Inject constructor(
 
     // =================== Etapa 2: participantes ===================
 
+
     /** Regra de negócio: só dá para mexer em documento do próprio admin e ainda em RASCUNHO. */
-    private suspend fun garantirRascunho(documentId: Long, ownerId: Long) {
+    private suspend fun garantirRascunho(documentId: Long, ownerId: Long): DocumentEntity {
         val doc = documentDao.getById(documentId)
         if (doc == null || doc.ownerId != ownerId) {
             throw IllegalStateException("Documento não encontrado.")
@@ -105,6 +110,7 @@ class RoomDocumentRepository @Inject constructor(
         if (doc.status != DocumentStatus.RASCUNHO) {
             throw IllegalStateException("Documento já enviado não pode ser alterado. Crie uma nova versão.")
         }
+        return doc
     }
 
     /** Executa uma alteração e transforma erros em mensagens amigáveis. */
@@ -176,4 +182,62 @@ class RoomDocumentRepository @Inject constructor(
 
     override fun observeMyDocumentsWithProgress(ownerId: Long): Flow<List<DocumentListItem>> =
         documentDao.observeByOwnerWithProgress(ownerId)
+
+    // =================== Etapa 3: campos de assinatura ===================
+
+    override fun observeFields(documentId: Long): Flow<List<SignatureFieldEntity>> =
+        fieldDao.observeByDocument(documentId)
+
+    /** Regra de negócio: o campo precisa estar numa página que existe e DENTRO dos limites dela. */
+    private fun validarCampo(campo: SignatureFieldEntity, doc: DocumentEntity) {
+        if (campo.pagina !in 0 until doc.quantidadePaginas) {
+            throw IllegalArgumentException("Página inválida.")
+        }
+        val margem = 0.0001f // tolerância para arredondamentos
+        val dentroDaPagina = campo.x >= 0f && campo.y >= 0f &&
+                campo.largura > 0f && campo.altura > 0f &&
+                campo.x + campo.largura <= 1f + margem &&
+                campo.y + campo.altura <= 1f + margem
+        if (!dentroDaPagina) {
+            throw IllegalArgumentException("O campo precisa ficar dentro dos limites da página.")
+        }
+    }
+
+    override suspend fun addField(ownerId: Long, campo: SignatureFieldEntity): Result<Long> = try {
+        val doc = garantirRascunho(campo.documentId, ownerId)
+        validarCampo(campo, doc)
+        // Regra: todo campo pertence a um participante DESTE documento
+        val participante = signerDao.getById(campo.signerId)
+        if (participante == null || participante.documentId != campo.documentId) {
+            throw IllegalArgumentException("Selecione um signatário deste documento.")
+        }
+        Result.success(fieldDao.insert(campo))
+    } catch (e: IllegalArgumentException) {
+        Result.failure(e)
+    } catch (e: IllegalStateException) {
+        Result.failure(e)
+    } catch (e: Exception) {
+        Result.failure(Exception("Não foi possível salvar o campo."))
+    }
+
+    override suspend fun updateField(ownerId: Long, campo: SignatureFieldEntity): Result<Unit> = executar {
+        val doc = garantirRascunho(campo.documentId, ownerId)
+        validarCampo(campo, doc)
+        fieldDao.update(campo)
+    }
+
+    override suspend fun deleteField(ownerId: Long, campo: SignatureFieldEntity): Result<Unit> = executar {
+        garantirRascunho(campo.documentId, ownerId)
+        fieldDao.delete(campo)
+    }
+
+    override suspend fun renderPage(
+        documentId: Long,
+        userId: Long,
+        pagina: Int,
+        larguraPx: Int
+    ): Bitmap? = withContext(Dispatchers.IO) {
+        val doc = getDocument(documentId, userId) ?: return@withContext null
+        runCatching { storage.renderPage(File(doc.caminhoArquivo), pagina, larguraPx) }.getOrNull()
+    }
 }

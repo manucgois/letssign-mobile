@@ -17,6 +17,7 @@ import br.com.fiap.letssign.ui.screens.document.NewDocumentScreen
 import br.com.fiap.letssign.ui.screens.document.DocumentSignersScreen
 import br.com.fiap.letssign.ui.screens.admin.AdminDashboardScreen
 import br.com.fiap.letssign.ui.screens.splash.SplashScreen
+import br.com.fiap.letssign.ui.screens.document.DocumentFieldsScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -139,17 +140,27 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             route = Routes.DOCUMENT_SIGNERS,
             arguments = listOf(navArgument("documentId") { type = NavType.LongType })
         ) {
-            val context = androidx.compose.ui.platform.LocalContext.current
             DocumentSignersScreen(
                 onBack = { navController.popBackStack() },
-                // Provisório: na próxima etapa, vai para "Campos de assinatura"
+                onContinue = { id -> navController.navigate(Routes.documentFields(id)) },
+                onCadastrarNovo = { navController.navigate(Routes.signerForm()) }
+            )
+        }
+
+        composable(
+            route = Routes.DOCUMENT_FIELDS,
+            arguments = listOf(navArgument("documentId") { type = NavType.LongType })
+        ) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            DocumentFieldsScreen(
+                onBack = { navController.popBackStack() },
+                // Provisório: na próxima etapa, vai para "Revisão e envio"
                 onContinue = {
                     android.widget.Toast.makeText(
-                        context, "Signatários salvos! Próxima etapa: campos.", android.widget.Toast.LENGTH_SHORT
+                        context, "Campos salvos! Próxima etapa: revisão.", android.widget.Toast.LENGTH_SHORT
                     ).show()
-                    navController.popBackStack()
-                },
-                onCadastrarNovo = { navController.navigate(Routes.signerForm()) }
+                    navController.popBackStack(Routes.ADMIN_HOME, inclusive = false)
+                }
             )
         }
     }
