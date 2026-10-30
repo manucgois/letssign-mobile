@@ -30,14 +30,19 @@ interface DocumentDao {
     fun observeByOwner(ownerId: Long): Flow<List<DocumentEntity>>
 
     /**
-     * Documentos do SIGNATÁRIO: apenas os que foram ENVIADOS para ele
-     * (rascunhos nunca aparecem), junto com a situação dele em cada um.
+     * Documentos do SIGNATÁRIO: apenas os ENVIADOS para ele (rascunhos nunca aparecem),
+     * com a situação dele e o nome de quem enviou.
      */
     @Query(
         """
-        SELECT d.*, s.id AS meuSignerId, s.status AS meuStatus
+        SELECT d.*,
+            s.id AS meuSignerId,
+            s.status AS meuStatus,
+            s.assinadoEm AS meuAssinadoEm,
+            u.nomeCompleto AS remetente
         FROM documents d
         INNER JOIN document_signers s ON s.documentId = d.id
+        INNER JOIN users u ON u.id = d.ownerId
         WHERE s.userId = :userId AND d.status != 'RASCUNHO'
         ORDER BY d.enviadoEm DESC
         """

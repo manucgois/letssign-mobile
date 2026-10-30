@@ -13,6 +13,8 @@ import br.com.fiap.letssign.data.repository.RoomSignatureProfileRepository
 import br.com.fiap.letssign.domain.repository.SignatureProfileRepository
 import br.com.fiap.letssign.data.repository.RoomDocumentRepository
 import br.com.fiap.letssign.domain.repository.DocumentRepository
+import br.com.fiap.letssign.data.repository.RoomSigningRepository
+import br.com.fiap.letssign.domain.repository.SigningRepository
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,4 +37,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDocumentRepository(impl: RoomDocumentRepository): DocumentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSigningRepository(impl: RoomSigningRepository): SigningRepository
+
 }

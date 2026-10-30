@@ -18,4 +18,10 @@ interface AuditEventDao {
 
     @Query("SELECT * FROM audit_events WHERE documentId = :documentId ORDER BY dataHora ASC")
     suspend fun getByDocument(documentId: Long): List<AuditEventEntity>
+
+    /** Quantas vezes um usuário já gerou um tipo de evento (ex.: VISUALIZADO) neste documento. */
+    @Query("SELECT COUNT(*) FROM audit_events WHERE documentId = :documentId AND userId = :userId AND tipo = :tipo")
+    suspend fun count(documentId: Long, userId: Long, tipo: String): Int
+
+
 }

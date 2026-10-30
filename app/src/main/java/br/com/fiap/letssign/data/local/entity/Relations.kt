@@ -15,11 +15,14 @@ data class SignerWithUser(
     val user: UserEntity
 )
 
-/** Documento visto pelo signatário: o documento + a situação DELE naquele documento. */
+
+/** Documento visto pelo signatário: o documento + a situação DELE + quem enviou. */
 data class SignerDocumentItem(
     @Embedded val document: DocumentEntity,
     val meuSignerId: Long,
-    val meuStatus: SignerStatus
+    val meuStatus: SignerStatus,
+    val meuAssinadoEm: Long?,
+    val remetente: String
 )
 
 /** Contagem de documentos por status (para os cards do dashboard do admin). */

@@ -76,6 +76,7 @@ import br.com.fiap.letssign.ui.theme.Cursiva
 import br.com.fiap.letssign.ui.theme.LightOutline
 import br.com.fiap.letssign.ui.theme.Tinta
 import br.com.fiap.letssign.util.StampFormatter
+import androidx.compose.material3.MenuAnchorType
 
 @Composable
 fun SignatureSetupScreen(
@@ -322,7 +323,7 @@ private fun TipoIdentificacaoDropdown(
             label = { Text("Tipo de identificação") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = aberto) },
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
         )
         ExposedDropdownMenu(expanded = aberto, onDismissRequest = { aberto = false }) {

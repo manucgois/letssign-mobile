@@ -22,4 +22,10 @@ object FileHasher {
     /** Versão curta para exibir no carimbo, ex.: "A1F3-9C2E". */
     fun shortCode(hash: String): String =
         hash.take(8).uppercase().chunked(4).joinToString("-")
+
+    /** SHA-256 de um texto (usado para gerar o código único de cada assinatura). */
+    fun sha256(texto: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(texto.toByteArray())
+            .joinToString("") { "%02x".format(it) }
 }
