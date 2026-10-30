@@ -6,7 +6,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.letssign.domain.model.UserRole
-import br.com.fiap.letssign.ui.screens.home.SignerHomeScreen
 import br.com.fiap.letssign.ui.screens.login.LoginScreen
 import br.com.fiap.letssign.ui.screens.signature.SignatureSetupScreen
 import androidx.navigation.NavType
@@ -19,6 +18,9 @@ import br.com.fiap.letssign.ui.screens.admin.AdminDashboardScreen
 import br.com.fiap.letssign.ui.screens.splash.SplashScreen
 import br.com.fiap.letssign.ui.screens.document.DocumentFieldsScreen
 import br.com.fiap.letssign.ui.screens.document.DocumentReviewScreen
+import br.com.fiap.letssign.ui.screens.signer.SignDocumentScreen
+import br.com.fiap.letssign.ui.screens.signer.SignerDashboardScreen
+
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -131,9 +133,10 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         composable(Routes.SIGNER_HOME) {
-            SignerHomeScreen(
-                onLogout = { irParaLogin() },
-                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) }
+            SignerDashboardScreen(
+                onOpenDocument = { id -> navController.navigate(Routes.signDocument(id)) },
+                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
+                onLogout = { irParaLogin() }
             )
         }
 
@@ -169,6 +172,16 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onEditFields = { navController.popBackStack(Routes.DOCUMENT_FIELDS, inclusive = false) },
                 // Depois do envio, volta ao painel limpando as etapas do histórico
                 onFinish = { navController.popBackStack(Routes.ADMIN_HOME, inclusive = false) }
+            )
+        }
+
+        composable(
+            route = Routes.SIGN_DOCUMENT,
+            arguments = listOf(navArgument("documentId") { type = NavType.LongType })
+        ) {
+            SignDocumentScreen(
+                onBack = { navController.popBackStack() },
+                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) }
             )
         }
 
