@@ -10,6 +10,7 @@ import br.com.fiap.letssign.domain.model.SignerRole
 import br.com.fiap.letssign.data.local.entity.DocumentListItem
 import android.graphics.Bitmap
 import br.com.fiap.letssign.data.local.entity.SignatureFieldEntity
+import br.com.fiap.letssign.domain.model.EnvioResultado
 
 interface DocumentRepository {
     fun observeMyDocuments(ownerId: Long): Flow<List<DocumentEntity>>
@@ -43,4 +44,17 @@ interface DocumentRepository {
     /** Desenha uma página do PDF como imagem (só para quem tem acesso ao documento). */
     suspend fun renderPage(documentId: Long, userId: Long, pagina: Int, larguraPx: Int): Bitmap?
 
+    // ----- Etapa 4: envio -----
+    /**
+     * Envia o documento para assinatura. A mesma idempotencyKey em várias tentativas
+     * NUNCA gera solicitações duplicadas.
+     * simularFalha = true serve só para demonstrar o tratamento de erro.
+     */
+    suspend fun sendDocument(
+        ownerId: Long,
+        documentId: Long,
+        mensagem: String?,
+        idempotencyKey: String,
+        simularFalha: Boolean = false
+    ): Result<EnvioResultado>
 }

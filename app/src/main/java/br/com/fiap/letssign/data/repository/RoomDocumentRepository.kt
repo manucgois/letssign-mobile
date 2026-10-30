@@ -27,6 +27,11 @@ import br.com.fiap.letssign.data.local.entity.DocumentListItem
 import android.graphics.Bitmap
 import br.com.fiap.letssign.data.local.dao.SignatureFieldDao
 import br.com.fiap.letssign.data.local.entity.SignatureFieldEntity
+import br.com.fiap.letssign.data.local.dao.SendRequestDao
+import br.com.fiap.letssign.data.local.entity.SendRequestEntity
+import br.com.fiap.letssign.domain.model.EnvioResultado
+import br.com.fiap.letssign.domain.model.SendStatus
+import java.io.IOException
 
 class RoomDocumentRepository @Inject constructor(
     private val database: AppDatabase,
@@ -34,6 +39,7 @@ class RoomDocumentRepository @Inject constructor(
     private val auditEventDao: AuditEventDao,
     private val signerDao: DocumentSignerDao,
     private val fieldDao: SignatureFieldDao,
+    private val sendRequestDao: SendRequestDao,
     private val storage: DocumentFileStorage
 ) : DocumentRepository {
 
@@ -239,5 +245,108 @@ class RoomDocumentRepository @Inject constructor(
     ): Bitmap? = withContext(Dispatchers.IO) {
         val doc = getDocument(documentId, userId) ?: return@withContext null
         runCatching { storage.renderPage(File(doc.caminhoArquivo), pagina, larguraPx) }.getOrNull()
+    }
+
+    // =================== Etapa 4: envio ===================
+
+    /** Regras de negócio conferidas ANTES de enviar (a tela também confere, mas aqui é a garantia). */
+    private fun validarEnvio(
+        doc: DocumentEntity,
+        participantes: List<DocumentSignerEntity>,
+        campos: List<SignatureFieldEntity>
+    ) {
+        if (doc.titulo.isBlank()) {
+            throw IllegalArgumentException("Informe o título do documento.")
+        }
+        if (participantes.isEmpty()) {
+            throw IllegalArgumentException("Adicione pelo menos um signatário.")
+        }
+        if (participantes.none { it.obrigatorio }) {
+            throw IllegalArgumentException("Marque pelo menos um signatário como obrigatório.")
+        }
+        if (participantes.any { p -> campos.none { it.signerId == p.id } }) {
+            throw IllegalArgumentException("Há signatários sem campo de assinatura.")
+        }
+        campos.forEach { validarCampo(it, doc) }
+
+        // Integridade: o PDF precisa ser exatamente o mesmo do upload
+        val arquivo = File(doc.caminhoArquivo)
+        if (!arquivo.exists() || FileHasher.sha256(arquivo) != doc.hashOriginal) {
+            throw IllegalStateException(
+                "O arquivo do documento foi alterado ou está corrompido. Crie o documento novamente."
+            )
+        }
+    }
+
+    override suspend fun sendDocument(
+        ownerId: Long,
+        documentId: Long,
+        mensagem: String?,
+        idempotencyKey: String,
+        simularFalha: Boolean
+    ): Result<EnvioResultado> = withContext(Dispatchers.IO) {
+
+        // 1. Esta solicitação já foi concluída antes? Então não faz nada de novo.
+        val anterior = sendRequestDao.getByKey(idempotencyKey)
+        if (anterior != null && anterior.status == SendStatus.SUCESSO) {
+            return@withContext Result.success(
+                EnvioResultado(jaEnviadoAntes = true, totalSignatarios = signerDao.getByDocument(documentId).size)
+            )
+        }
+
+        // 2. Registra a solicitação (só na primeira tentativa) e conta a tentativa
+        if (anterior == null) {
+            sendRequestDao.insert(SendRequestEntity(documentId = documentId, idempotencyKey = idempotencyKey))
+        }
+        val solicitacao = sendRequestDao.getByKey(idempotencyKey)
+            ?: return@withContext Result.failure(Exception("Não foi possível registrar o envio."))
+        val tentativa = solicitacao.copy(
+            tentativas = solicitacao.tentativas + 1,
+            ultimaTentativaEm = System.currentTimeMillis()
+        )
+
+        try {
+            // 3. Valida tudo
+            val doc = garantirRascunho(documentId, ownerId)
+            val participantes = signerDao.getByDocument(documentId)
+            val campos = fieldDao.getByDocument(documentId)
+            validarEnvio(doc, participantes, campos)
+
+            if (simularFalha) throw IOException("Falha simulada de conexão")
+
+            // 4. Envia: status + auditoria + solicitação, tudo na MESMA transação
+            val agora = System.currentTimeMillis()
+            database.withTransaction {
+                documentDao.update(
+                    doc.copy(
+                        status = DocumentStatus.ENVIADO,
+                        enviadoEm = agora,
+                        mensagemConvite = mensagem?.trim()?.ifBlank { null }
+                    )
+                )
+                auditEventDao.insert(
+                    AuditEventEntity(
+                        documentId = documentId,
+                        userId = ownerId,
+                        tipo = AuditEventType.ENVIADO,
+                        dataHora = agora,
+                        detalhe = "Enviado para ${participantes.size} signatário(s)"
+                    )
+                )
+                sendRequestDao.update(tentativa.copy(status = SendStatus.SUCESSO, erro = null))
+            }
+            Result.success(EnvioResultado(jaEnviadoAntes = false, totalSignatarios = participantes.size))
+
+        } catch (e: Exception) {
+            val mensagemErro = when (e) {
+                is IllegalArgumentException, is IllegalStateException -> e.message
+                is IOException -> "Não foi possível concluir o envio. Verifique sua conexão e tente novamente."
+                else -> "Ocorreu um erro inesperado ao enviar. Tente novamente."
+            } ?: "Não foi possível enviar."
+
+            // A falha também fica registrada (útil para auditoria e suporte)
+            runCatching { sendRequestDao.update(tentativa.copy(status = SendStatus.FALHA, erro = mensagemErro)) }
+            Result.failure(Exception(mensagemErro))
+        }
     }
 }

@@ -12,6 +12,8 @@ object Routes {
     const val DOCUMENT_SIGNERS = "document/{documentId}/signers"
     const val SPLASH = "splash"
     const val DOCUMENT_FIELDS = "document/{documentId}/fields"
+    const val DOCUMENT_REVIEW = "document/{documentId}/review"
+
 
     /** Monta a rota do formulário: sem id = novo; com id = editar. */
     fun signerForm(id: Long? = null): String =
@@ -20,5 +22,7 @@ object Routes {
     fun documentSigners(documentId: Long): String = "document/$documentId/signers"
 
     fun documentFields(documentId: Long): String = "document/$documentId/fields"
+
+    fun documentReview(documentId: Long): String = "document/$documentId/review"
 
 }

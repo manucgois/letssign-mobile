@@ -18,6 +18,7 @@ import br.com.fiap.letssign.ui.screens.document.DocumentSignersScreen
 import br.com.fiap.letssign.ui.screens.admin.AdminDashboardScreen
 import br.com.fiap.letssign.ui.screens.splash.SplashScreen
 import br.com.fiap.letssign.ui.screens.document.DocumentFieldsScreen
+import br.com.fiap.letssign.ui.screens.document.DocumentReviewScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -151,17 +152,25 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             route = Routes.DOCUMENT_FIELDS,
             arguments = listOf(navArgument("documentId") { type = NavType.LongType })
         ) {
-            val context = androidx.compose.ui.platform.LocalContext.current
             DocumentFieldsScreen(
                 onBack = { navController.popBackStack() },
-                // Provisório: na próxima etapa, vai para "Revisão e envio"
-                onContinue = {
-                    android.widget.Toast.makeText(
-                        context, "Campos salvos! Próxima etapa: revisão.", android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                    navController.popBackStack(Routes.ADMIN_HOME, inclusive = false)
-                }
+                onContinue = { id -> navController.navigate(Routes.documentReview(id)) }
             )
         }
+
+        composable(
+            route = Routes.DOCUMENT_REVIEW,
+            arguments = listOf(navArgument("documentId") { type = NavType.LongType })
+        ) {
+            DocumentReviewScreen(
+                onBack = { navController.popBackStack() },
+                // "Editar" volta para a etapa correspondente (que já está no histórico)
+                onEditSigners = { navController.popBackStack(Routes.DOCUMENT_SIGNERS, inclusive = false) },
+                onEditFields = { navController.popBackStack(Routes.DOCUMENT_FIELDS, inclusive = false) },
+                // Depois do envio, volta ao painel limpando as etapas do histórico
+                onFinish = { navController.popBackStack(Routes.ADMIN_HOME, inclusive = false) }
+            )
+        }
+
     }
 }
