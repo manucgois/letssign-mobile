@@ -179,6 +179,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         ) {
             DocumentSignersScreen(
                 onBack = { navController.popBackStack() },
+                onExit = { navController.popBackStack(Routes.ADMIN_HOME, inclusive = false) },
                 onContinue = { id -> navController.navigate(Routes.documentFields(id)) },
                 onCadastrarNovo = { navController.navigate(Routes.signerForm()) }
             )
@@ -190,6 +191,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         ) {
             DocumentFieldsScreen(
                 onBack = { navController.popBackStack() },
+                onExit = { navController.popBackStack(Routes.ADMIN_HOME, inclusive = false) },
                 onContinue = { id -> navController.navigate(Routes.documentReview(id)) }
             )
         }
@@ -200,6 +202,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         ) {
             DocumentReviewScreen(
                 onBack = { navController.popBackStack() },
+                onExit = { navController.popBackStack(Routes.ADMIN_HOME, inclusive = false) },
                 // "Editar" volta para a etapa correspondente (que já está no histórico)
                 onEditSigners = { navController.popBackStack(Routes.DOCUMENT_SIGNERS, inclusive = false) },
                 onEditFields = { navController.popBackStack(Routes.DOCUMENT_FIELDS, inclusive = false) },

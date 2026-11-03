@@ -62,10 +62,12 @@ import br.com.fiap.letssign.ui.components.InitialsAvatar
 import br.com.fiap.letssign.ui.components.PdfPageView
 import br.com.fiap.letssign.ui.components.StepIndicator
 import br.com.fiap.letssign.ui.components.corDoSignatario
+import br.com.fiap.letssign.ui.components.FecharCadastroButton
 
 @Composable
 fun DocumentReviewScreen(
     onBack: () -> Unit,
+    onExit: () -> Unit,
     onEditSigners: () -> Unit,
     onEditFields: () -> Unit,
     onFinish: () -> Unit,
@@ -88,6 +90,14 @@ fun DocumentReviewScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    if (state.documentId != -1L) {
+                        FecharCadastroButton(
+                            documentId = state.documentId,
+                            onSairParaPainel = onExit
+                        )
                     }
                 }
             )

@@ -58,10 +58,12 @@ import br.com.fiap.letssign.data.local.entity.UserEntity
 import br.com.fiap.letssign.domain.model.SignerRole
 import br.com.fiap.letssign.ui.components.InitialsAvatar
 import br.com.fiap.letssign.ui.components.StepIndicator
+import br.com.fiap.letssign.ui.components.FecharCadastroButton
 
 @Composable
 fun DocumentSignersScreen(
     onBack: () -> Unit,
+    onExit: () -> Unit,
     onContinue: (Long) -> Unit,
     onCadastrarNovo: () -> Unit,
     viewModel: DocumentSignersViewModel = hiltViewModel()
@@ -82,6 +84,14 @@ fun DocumentSignersScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    if (state.documentId != -1L) {
+                        FecharCadastroButton(
+                            documentId = state.documentId,
+                            onSairParaPainel = onExit
+                        )
                     }
                 }
             )

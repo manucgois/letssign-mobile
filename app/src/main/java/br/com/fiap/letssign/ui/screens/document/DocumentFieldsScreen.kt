@@ -79,10 +79,12 @@ import br.com.fiap.letssign.ui.components.StepIndicator
 import br.com.fiap.letssign.ui.components.corDoSignatario
 import br.com.fiap.letssign.ui.theme.Tinta
 import kotlin.math.roundToInt
+import br.com.fiap.letssign.ui.components.FecharCadastroButton
 
 @Composable
 fun DocumentFieldsScreen(
     onBack: () -> Unit,
+    onExit: () -> Unit,
     onContinue: (Long) -> Unit,
     viewModel: DocumentFieldsViewModel = hiltViewModel()
 ) {
@@ -102,6 +104,14 @@ fun DocumentFieldsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    if (state.documentId != -1L) {
+                        FecharCadastroButton(
+                            documentId = state.documentId,
+                            onSairParaPainel = onExit
+                        )
                     }
                 }
             )
