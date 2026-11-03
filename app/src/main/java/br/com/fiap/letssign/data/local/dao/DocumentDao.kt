@@ -78,13 +78,16 @@ interface DocumentDao {
     )
     fun observeStatusCounts(ownerId: Long): Flow<List<StatusCount>>
 
-    /** Documentos do admin com o progresso: "2 de 3 assinaturas". */
+    /** Documentos do admin com o progresso e os nomes dos signatários. */
     @Query(
         """
         SELECT d.*,
             (SELECT COUNT(*) FROM document_signers s WHERE s.documentId = d.id) AS totalSignatarios,
             (SELECT COUNT(*) FROM document_signers s
-                WHERE s.documentId = d.id AND s.status = 'ASSINADO') AS assinados
+                WHERE s.documentId = d.id AND s.status = 'ASSINADO') AS assinados,
+            (SELECT GROUP_CONCAT(u.nomeCompleto, '|') FROM document_signers s2
+                INNER JOIN users u ON u.id = s2.userId
+                WHERE s2.documentId = d.id) AS nomesSignatarios
         FROM documents d
         WHERE d.ownerId = :ownerId
         ORDER BY d.criadoEm DESC

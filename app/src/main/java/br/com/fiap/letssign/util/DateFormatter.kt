@@ -19,4 +19,17 @@ object DateFormatter {
     /** Ex.: 03/11/2026 */
     fun data(millis: Long): String =
         Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).format(data)
+
+    /** Ex.: "hoje, 10:42" · "ontem, 18:05" · "21/10/2026" */
+    fun relativo(millis: Long): String {
+        val zona = ZoneId.systemDefault()
+        val momento = Instant.ofEpochMilli(millis).atZone(zona)
+        val hoje = java.time.LocalDate.now(zona)
+        val hora = momento.format(DateTimeFormatter.ofPattern("HH:mm"))
+        return when (momento.toLocalDate()) {
+            hoje -> "hoje, $hora"
+            hoje.minusDays(1) -> "ontem, $hora"
+            else -> momento.format(data)
+        }
+    }
 }

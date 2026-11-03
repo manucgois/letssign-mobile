@@ -14,14 +14,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/** Filtros da lista. status = null significa "todos". */
-enum class FiltroDocumento(val label: String, val status: DocumentStatus?) {
+/** Filtros da lista. statuses = null significa "todos". */
+enum class FiltroDocumento(val label: String, val statuses: Set<DocumentStatus>?) {
     TODOS("Todos", null),
-    RASCUNHO("Rascunhos", DocumentStatus.RASCUNHO),
-    AGUARDANDO("Aguardando", DocumentStatus.ENVIADO),
-    PARCIAL("Parciais", DocumentStatus.PARCIALMENTE_ASSINADO),
-    CONCLUIDO("Concluídos", DocumentStatus.CONCLUIDO),
-    RECUSADO("Recusados", DocumentStatus.RECUSADO)
+    RASCUNHO("Rascunhos", setOf(DocumentStatus.RASCUNHO)),
+    ANDAMENTO("Em andamento", setOf(DocumentStatus.ENVIADO, DocumentStatus.PARCIALMENTE_ASSINADO)),
+    CONCLUIDO("Concluídos", setOf(DocumentStatus.CONCLUIDO))
 }
 
 data class AdminDashboardUiState(
@@ -29,13 +27,15 @@ data class AdminDashboardUiState(
     val primeiroNome: String = "",
     val filtro: FiltroDocumento = FiltroDocumento.TODOS,
     val documentos: List<DocumentListItem> = emptyList(),
-    val contagem: Map<DocumentStatus, Int> = emptyMap(),
+    val totalRascunhos: Int = 0,
+    val totalAndamento: Int = 0,
+    val totalConcluidos: Int = 0,
     val totalGeral: Int = 0
 )
 
 @HiltViewModel
 class AdminDashboardViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
+    authRepository: AuthRepository,
     documentRepository: DocumentRepository
 ) : ViewModel() {
 
@@ -47,14 +47,15 @@ class AdminDashboardViewModel @Inject constructor(
             documentRepository.observeMyDocumentsWithProgress(admin?.id ?: -1L),
             filtro
         ) { lista, filtroAtual ->
+            fun conta(f: FiltroDocumento) = lista.count { f.statuses?.contains(it.document.status) == true }
             AdminDashboardUiState(
                 carregando = false,
                 primeiroNome = admin?.nomeCompleto?.substringBefore(" ").orEmpty(),
                 filtro = filtroAtual,
-                documentos = if (filtroAtual.status == null) lista
-                else lista.filter { it.document.status == filtroAtual.status },
-                // Conta quantos documentos existem em cada status (para os cards)
-                contagem = lista.groupingBy { it.document.status }.eachCount(),
+                documentos = filtroAtual.statuses?.let { s -> lista.filter { it.document.status in s } } ?: lista,
+                totalRascunhos = conta(FiltroDocumento.RASCUNHO),
+                totalAndamento = conta(FiltroDocumento.ANDAMENTO),
+                totalConcluidos = conta(FiltroDocumento.CONCLUIDO),
                 totalGeral = lista.size
             )
         }.stateIn(
@@ -67,6 +68,4 @@ class AdminDashboardViewModel @Inject constructor(
     fun onFiltro(novo: FiltroDocumento) {
         filtro.value = if (filtro.value == novo) FiltroDocumento.TODOS else novo
     }
-
-    fun logout() = authRepository.logout()
 }

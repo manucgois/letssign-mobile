@@ -32,8 +32,10 @@ data class StatusCount(
 )
 
 /** Documento na lista do admin + quantas pessoas assinam e quantas já assinaram. */
+/** Documento na lista do admin + progresso + nomes de quem assina (para os avatares). */
 data class DocumentListItem(
     @Embedded val document: DocumentEntity,
     val totalSignatarios: Int,
-    val assinados: Int
+    val assinados: Int,
+    val nomesSignatarios: String?
 )

@@ -91,17 +91,13 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         composable(Routes.ADMIN_HOME) {
-
             AdminDashboardScreen(
                 onNewDocument = { navController.navigate(Routes.NEW_DOCUMENT) },
-                onOpenSigners = { navController.navigate(Routes.SIGNERS) },
-                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
                 onContinueDraft = { id -> navController.navigate(Routes.documentSigners(id)) },
                 onOpenDocument = { id -> navController.navigate(Routes.documentTracking(id)) },
-                onLogout = { irParaLogin() },
                 bottomBar = {
                     RatificaBottomBar(ABAS_ADMIN, Routes.ADMIN_HOME) { irParaAba(it, Routes.ADMIN_HOME) }
-                },
+                }
             )
         }
 
@@ -168,7 +164,6 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             SignerDashboardScreen(
                 onOpenDocument = { id -> navController.navigate(Routes.signDocument(id)) },
                 onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
-                onLogout = { irParaLogin() },
                 bottomBar = {
                     RatificaBottomBar(ABAS_SIGNATARIO, Routes.SIGNER_HOME) { irParaAba(it, Routes.SIGNER_HOME) }
                 }
