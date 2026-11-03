@@ -20,7 +20,7 @@ import br.com.fiap.letssign.ui.screens.document.DocumentFieldsScreen
 import br.com.fiap.letssign.ui.screens.document.DocumentReviewScreen
 import br.com.fiap.letssign.ui.screens.signer.SignDocumentScreen
 import br.com.fiap.letssign.ui.screens.signer.SignerDashboardScreen
-
+import br.com.fiap.letssign.ui.screens.tracking.DocumentTrackingScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -81,18 +81,13 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         composable(Routes.ADMIN_HOME) {
-            val context = androidx.compose.ui.platform.LocalContext.current
+
             AdminDashboardScreen(
                 onNewDocument = { navController.navigate(Routes.NEW_DOCUMENT) },
                 onOpenSigners = { navController.navigate(Routes.SIGNERS) },
                 onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
                 onContinueDraft = { id -> navController.navigate(Routes.documentSigners(id)) },
-                // Provisório: depois abre a tela de acompanhamento
-                onOpenDocument = {
-                    android.widget.Toast.makeText(
-                        context, "Acompanhamento: em breve!", android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                },
+                onOpenDocument = { id -> navController.navigate(Routes.documentTracking(id)) },
                 onLogout = { irParaLogin() }
             )
         }
@@ -182,6 +177,16 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             SignDocumentScreen(
                 onBack = { navController.popBackStack() },
                 onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) }
+            )
+        }
+
+        composable(
+            route = Routes.DOCUMENT_TRACKING,
+            arguments = listOf(navArgument("documentId") { type = NavType.LongType })
+        ) {
+            DocumentTrackingScreen(
+                onBack = { navController.popBackStack() },
+                onSign = { id -> navController.navigate(Routes.signDocument(id)) }
             )
         }
 

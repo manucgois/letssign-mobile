@@ -11,6 +11,7 @@ import br.com.fiap.letssign.data.local.entity.DocumentListItem
 import android.graphics.Bitmap
 import br.com.fiap.letssign.data.local.entity.SignatureFieldEntity
 import br.com.fiap.letssign.domain.model.EnvioResultado
+import br.com.fiap.letssign.data.local.entity.AuditEventEntity
 
 interface DocumentRepository {
     fun observeMyDocuments(ownerId: Long): Flow<List<DocumentEntity>>
@@ -41,8 +42,14 @@ interface DocumentRepository {
     suspend fun updateField(ownerId: Long, campo: SignatureFieldEntity): Result<Unit>
     suspend fun deleteField(ownerId: Long, campo: SignatureFieldEntity): Result<Unit>
 
-    /** Desenha uma página do PDF como imagem (só para quem tem acesso ao documento). */
-    suspend fun renderPage(documentId: Long, userId: Long, pagina: Int, larguraPx: Int): Bitmap?
+    /** Desenha uma página do PDF. versaoFinal = true usa o PDF assinado, se existir. */
+    suspend fun renderPage(
+        documentId: Long,
+        userId: Long,
+        pagina: Int,
+        larguraPx: Int,
+        versaoFinal: Boolean = false
+    ): Bitmap?
 
     // ----- Etapa 4: envio -----
     /**
@@ -57,4 +64,8 @@ interface DocumentRepository {
         idempotencyKey: String,
         simularFalha: Boolean = false
     ): Result<EnvioResultado>
+
+    // ----- Acompanhamento -----
+    fun observeAuditEvents(documentId: Long): Flow<List<AuditEventEntity>>
+
 }

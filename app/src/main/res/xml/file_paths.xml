@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Só a pasta dos PDFs assinados pode ser compartilhada -->
+    <files-path name="assinados" path="documents/assinados/" />
+</paths>

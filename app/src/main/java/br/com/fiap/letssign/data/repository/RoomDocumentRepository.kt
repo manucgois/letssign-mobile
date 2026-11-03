@@ -241,10 +241,13 @@ class RoomDocumentRepository @Inject constructor(
         documentId: Long,
         userId: Long,
         pagina: Int,
-        larguraPx: Int
+        larguraPx: Int,
+        versaoFinal: Boolean
     ): Bitmap? = withContext(Dispatchers.IO) {
         val doc = getDocument(documentId, userId) ?: return@withContext null
-        runCatching { storage.renderPage(File(doc.caminhoArquivo), pagina, larguraPx) }.getOrNull()
+        val final = doc.caminhoArquivoFinal
+        val caminho = if (versaoFinal && final != null) final else doc.caminhoArquivo
+        runCatching { storage.renderPage(File(caminho), pagina, larguraPx) }.getOrNull()
     }
 
     // =================== Etapa 4: envio ===================
@@ -348,5 +351,9 @@ class RoomDocumentRepository @Inject constructor(
             runCatching { sendRequestDao.update(tentativa.copy(status = SendStatus.FALHA, erro = mensagemErro)) }
             Result.failure(Exception(mensagemErro))
         }
+
     }
+
+    override fun observeAuditEvents(documentId: Long): Flow<List<AuditEventEntity>> =
+        auditEventDao.observeByDocument(documentId)
 }
