@@ -92,8 +92,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
 
         composable(Routes.ADMIN_HOME) {
             AdminDashboardScreen(
-                onNewDocument = { navController.navigate(Routes.NEW_DOCUMENT) },
-                onContinueDraft = { id -> navController.navigate(Routes.documentSigners(id)) },
+                onNewDocument = { navController.navigate(Routes.newDocument()) },
+                onContinueDraft = { id -> navController.navigate(Routes.newDocument(id)) },
                 onOpenDocument = { id -> navController.navigate(Routes.documentTracking(id)) },
                 bottomBar = {
                     RatificaBottomBar(ABAS_ADMIN, Routes.ADMIN_HOME) { irParaAba(it, Routes.ADMIN_HOME) }
@@ -133,15 +133,18 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        composable(Routes.NEW_DOCUMENT) {
+        composable(
+            route = Routes.NEW_DOCUMENT,
+            arguments = listOf(
+                navArgument("documentId") {
+                    type = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) {
             NewDocumentScreen(
                 onBack = { navController.popBackStack() },
-                onCreated = { id ->
-                    navController.navigate(Routes.documentSigners(id)) {
-                        // Remove a Etapa 1 do histórico: o "voltar" não recria o rascunho
-                        popUpTo(Routes.NEW_DOCUMENT) { inclusive = true }
-                    }
-                }
+                onContinue = { id -> navController.navigate(Routes.documentSigners(id)) }
             )
         }
 

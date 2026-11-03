@@ -356,4 +356,93 @@ class RoomDocumentRepository @Inject constructor(
 
     override fun observeAuditEvents(documentId: Long): Flow<List<AuditEventEntity>> =
         auditEventDao.observeByDocument(documentId)
+
+    // =================== Etapa 1: editar ou descartar rascunho ===================
+
+    override suspend fun getDraftPreview(documentId: Long, ownerId: Long): PdfInfo? =
+        withContext(Dispatchers.IO) {
+            val doc = documentDao.getById(documentId) ?: return@withContext null
+            if (doc.ownerId != ownerId || doc.status != DocumentStatus.RASCUNHO) return@withContext null
+            val arquivo = File(doc.caminhoArquivo)
+            if (!arquivo.exists()) return@withContext null
+            runCatching {
+                PdfInfo(
+                    nomeArquivo = doc.nomeArquivo,
+                    tamanhoBytes = arquivo.length(),
+                    paginas = doc.quantidadePaginas,
+                    capa = storage.renderPage(arquivo, 0, 600)
+                )
+            }.getOrNull()
+        }
+
+    override suspend fun updateDraft(
+        ownerId: Long,
+        documentId: Long,
+        titulo: String,
+        novoArquivo: Uri?
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        var arquivoCopiado: File? = null
+        try {
+            val doc = garantirRascunho(documentId, ownerId)
+
+            // Só o título mudou
+            if (novoArquivo == null) {
+                documentDao.update(doc.copy(titulo = titulo.trim()))
+                return@withContext Result.success(Unit)
+            }
+
+            // Troca de arquivo: valida, copia e calcula o novo hash
+            val info = storage.inspect(novoArquivo)
+            val copia = storage.importPdf(novoArquivo)
+            arquivoCopiado = copia
+            val hash = FileHasher.sha256(copia)
+
+            database.withTransaction {
+                fieldDao.deleteByDocument(documentId) // as páginas podem ser outras
+                documentDao.update(
+                    doc.copy(
+                        titulo = titulo.trim(),
+                        nomeArquivo = info.nomeArquivo,
+                        caminhoArquivo = copia.absolutePath,
+                        quantidadePaginas = info.paginas,
+                        hashOriginal = hash
+                    )
+                )
+                auditEventDao.insert(
+                    AuditEventEntity(
+                        documentId = documentId,
+                        userId = ownerId,
+                        tipo = AuditEventType.NOVA_VERSAO,
+                        detalhe = "Arquivo do rascunho substituído por ${info.nomeArquivo}"
+                    )
+                )
+            }
+            runCatching { File(doc.caminhoArquivo).delete() } // o arquivo antigo não é mais usado
+            Result.success(Unit)
+
+        } catch (e: PdfInvalidoException) {
+            arquivoCopiado?.delete()
+            Result.failure(e)
+        } catch (e: IllegalStateException) {
+            arquivoCopiado?.delete()
+            Result.failure(e)
+        } catch (e: Exception) {
+            arquivoCopiado?.delete()
+            Result.failure(Exception("Não foi possível salvar as alterações. Tente novamente."))
+        }
+    }
+
+    override suspend fun deleteDraft(ownerId: Long, documentId: Long): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val doc = garantirRascunho(documentId, ownerId) // só rascunho pode ser apagado
+                documentDao.delete(doc)
+                runCatching { File(doc.caminhoArquivo).delete() }
+                Result.success(Unit)
+            } catch (e: IllegalStateException) {
+                Result.failure(e)
+            } catch (e: Exception) {
+                Result.failure(Exception("Não foi possível descartar o rascunho."))
+            }
+        }
 }

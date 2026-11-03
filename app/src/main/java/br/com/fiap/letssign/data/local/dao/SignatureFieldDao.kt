@@ -28,4 +28,8 @@ interface SignatureFieldDao {
 
     @Query("SELECT * FROM signature_fields WHERE signerId = :signerId ORDER BY pagina")
     suspend fun getBySigner(signerId: Long): List<SignatureFieldEntity>
+
+    @Query("DELETE FROM signature_fields WHERE documentId = :documentId")
+    suspend fun deleteByDocument(documentId: Long)
+
 }

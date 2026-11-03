@@ -2,7 +2,7 @@
 
 package br.com.fiap.letssign.ui.screens.document
 
-import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -25,9 +25,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.UploadFile
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,6 +42,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,7 +51,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,21 +63,23 @@ import java.util.Locale
 @Composable
 fun NewDocumentScreen(
     onBack: () -> Unit,
-    onCreated: (Long) -> Unit,
+    onContinue: (Long) -> Unit,
     viewModel: NewDocumentViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
-    // Abre o seletor de arquivos do Android, filtrando só PDFs
     val seletorPdf = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri -> viewModel.onPdfSelecionado(uri) }
 
-    LaunchedEffect(state.criadoId) {
-        state.criadoId?.let { id ->
-            Toast.makeText(context, "Rascunho criado!", Toast.LENGTH_SHORT).show()
-            onCreated(id)
+    // O "voltar" do celular passa pela mesma regra do botão da barra superior
+    BackHandler { viewModel.pedirSaida() }
+
+    LaunchedEffect(state.sair) { if (state.sair) onBack() }
+    LaunchedEffect(state.avancarPara) {
+        state.avancarPara?.let { id ->
+            viewModel.onAvancou()
+            onContinue(id)
         }
     }
 
@@ -84,13 +88,23 @@ fun NewDocumentScreen(
             TopAppBar(
                 title = { Text("Novo documento") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = viewModel::pedirSaida) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Voltar")
                     }
                 }
             )
         }
     ) { innerPadding ->
+        if (state.carregando) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator() }
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -116,18 +130,41 @@ fun NewDocumentScreen(
 
             Text("Arquivo", style = MaterialTheme.typography.titleMedium)
 
+            val pdf = state.pdf
             when {
                 state.analisando -> CartaoAnalisando()
-                state.pdf != null -> CartaoPdfSelecionado(
-                    pdf = state.pdf!!,
+                pdf != null -> CartaoPdfSelecionado(
+                    pdf = pdf,
+                    novo = state.pdfUri != null,
                     onTrocar = { seletorPdf.launch(arrayOf("application/pdf")) }
                 )
                 else -> CartaoSelecionar(onClick = { seletorPdf.launch(arrayOf("application/pdf")) })
             }
 
-            if (state.arquivoErro != null) {
-                CartaoErro(state.arquivoErro ?: "")
+            // Aviso ao trocar o arquivo de um rascunho que já tem campos
+            if (state.modoEdicao && state.totalCampos > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        if (state.pdfUri != null)
+                            "Ao continuar, os ${state.totalCampos} campo(s) de assinatura serão removidos " +
+                                    "e você poderá posicioná-los de novo. Os signatários continuam."
+                        else
+                            "Trocar o arquivo remove os campos de assinatura já posicionados. " +
+                                    "Os signatários continuam.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
+
+            if (state.arquivoErro != null) CartaoErro(state.arquivoErro ?: "")
 
             Text(
                 "Aceito: PDF de até 20 MB, sem senha.",
@@ -158,6 +195,27 @@ fun NewDocumentScreen(
             }
         }
     }
+
+    if (state.confirmandoSaida) {
+        AlertDialog(
+            onDismissRequest = viewModel::continuarEditando,
+            title = { Text("Sair do cadastro?") },
+            text = {
+                Text("O documento fica salvo como rascunho, e você pode continuar depois pelo painel.")
+            },
+            confirmButton = {
+                Button(onClick = viewModel::salvarESair) { Text("Salvar e sair") }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = viewModel::descartarRascunho) {
+                        Text("Descartar", color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = viewModel::continuarEditando) { Text("Continuar editando") }
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -185,10 +243,7 @@ private fun CartaoSelecionar(onClick: () -> Unit) {
 @Composable
 private fun CartaoAnalisando() {
     Card(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
             Spacer(Modifier.width(16.dp))
             Text("Verificando o arquivo…")
@@ -197,7 +252,7 @@ private fun CartaoAnalisando() {
 }
 
 @Composable
-private fun CartaoPdfSelecionado(pdf: PdfInfo, onTrocar: () -> Unit) {
+private fun CartaoPdfSelecionado(pdf: PdfInfo, novo: Boolean, onTrocar: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Row(Modifier.padding(16.dp)) {
             Image(
@@ -233,7 +288,7 @@ private fun CartaoPdfSelecionado(pdf: PdfInfo, onTrocar: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    "✓ Arquivo válido",
+                    if (novo) "✓ Arquivo válido" else "✓ Arquivo salvo no rascunho",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.SemiBold
@@ -257,11 +312,7 @@ private fun CartaoErro(mensagem: String) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Outlined.ErrorOutline,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error
-            )
+            Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             Spacer(Modifier.width(12.dp))
             Text(mensagem, color = MaterialTheme.colorScheme.onErrorContainer)
         }

@@ -9,6 +9,7 @@ import br.com.fiap.letssign.data.local.entity.SignerDocumentItem
 import br.com.fiap.letssign.data.local.entity.StatusCount
 import kotlinx.coroutines.flow.Flow
 import br.com.fiap.letssign.data.local.entity.DocumentListItem
+import androidx.room.Delete
 
 @Dao
 interface DocumentDao {
@@ -94,5 +95,8 @@ interface DocumentDao {
         """
     )
     fun observeByOwnerWithProgress(ownerId: Long): Flow<List<DocumentListItem>>
+
+    @Delete
+    suspend fun delete(document: DocumentEntity)
 
 }

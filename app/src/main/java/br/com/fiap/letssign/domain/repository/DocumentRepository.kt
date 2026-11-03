@@ -68,4 +68,14 @@ interface DocumentRepository {
     // ----- Acompanhamento -----
     fun observeAuditEvents(documentId: Long): Flow<List<AuditEventEntity>>
 
+    // ----- Etapa 1: editar ou descartar rascunho -----
+    /** Prévia (miniatura + dados) do PDF de um rascunho já salvo. */
+    suspend fun getDraftPreview(documentId: Long, ownerId: Long): PdfInfo?
+
+    /** Atualiza o título e, se novoArquivo != null, troca o PDF (os campos são removidos). */
+    suspend fun updateDraft(ownerId: Long, documentId: Long, titulo: String, novoArquivo: Uri?): Result<Unit>
+
+    /** Apaga o rascunho por completo (documento, signatários, campos e arquivo). */
+    suspend fun deleteDraft(ownerId: Long, documentId: Long): Result<Unit>
+
 }

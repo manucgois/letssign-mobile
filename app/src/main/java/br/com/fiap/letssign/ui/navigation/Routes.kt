@@ -8,7 +8,7 @@ object Routes {
     const val SIGNER_HOME = "signer_home"
     const val SIGNERS = "signers"
     const val SIGNER_FORM = "signer_form?signerId={signerId}"
-    const val NEW_DOCUMENT = "new_document"
+    const val NEW_DOCUMENT = "new_document?documentId={documentId}"
     const val DOCUMENT_SIGNERS = "document/{documentId}/signers"
     const val SPLASH = "splash"
     const val DOCUMENT_FIELDS = "document/{documentId}/fields"
@@ -31,5 +31,8 @@ object Routes {
     fun signDocument(documentId: Long): String = "sign/$documentId"
 
     fun documentTracking(documentId: Long): String = "document/$documentId/tracking"
+
+    fun newDocument(documentId: Long? = null): String =
+        if (documentId == null) "new_document" else "new_document?documentId=$documentId"
 
 }
