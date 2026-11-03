@@ -15,6 +15,8 @@ object Routes {
     const val DOCUMENT_REVIEW = "document/{documentId}/review"
     const val SIGN_DOCUMENT = "sign/{documentId}"
     const val DOCUMENT_TRACKING = "document/{documentId}/tracking"
+    const val ADMIN_PROFILE = "admin_profile"
+    const val SIGNER_PROFILE = "signer_profile"
 
     /** Monta a rota do formulário: sem id = novo; com id = editar. */
     fun signerForm(id: Long? = null): String =

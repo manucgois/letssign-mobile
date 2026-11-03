@@ -56,12 +56,17 @@ fun SignersListScreen(
     onBack: () -> Unit,
     onNovo: () -> Unit,
     onEditar: (Long) -> Unit,
-    viewModel: SignersListViewModel = hiltViewModel()
+    mostrarVoltar: Boolean = true,
+    bottomBar: @Composable () -> Unit = {},
+    viewModel: SignersListViewModel = hiltViewModel(),
+
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val busca by viewModel.busca.collectAsStateWithLifecycle()
 
     SignersListContent(
+        mostrarVoltar = mostrarVoltar,
+        bottomBar = bottomBar,
         state = state,
         busca = busca,
         onBuscaChange = viewModel::onBuscaChange,
@@ -78,15 +83,20 @@ fun SignersListContent(
     onBuscaChange: (String) -> Unit,
     onBack: () -> Unit,
     onNovo: () -> Unit,
-    onEditar: (Long) -> Unit
+    onEditar: (Long) -> Unit,
+    mostrarVoltar: Boolean = true,
+    bottomBar: @Composable () -> Unit = {}
 ) {
     Scaffold(
+        bottomBar = bottomBar,
         topBar = {
             TopAppBar(
                 title = { Text("Signatários") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Voltar")
+                    if (mostrarVoltar) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Voltar")
+                        }
                     }
                 }
             )

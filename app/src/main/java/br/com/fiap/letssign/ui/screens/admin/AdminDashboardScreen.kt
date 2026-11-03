@@ -62,11 +62,13 @@ fun AdminDashboardScreen(
     onContinueDraft: (Long) -> Unit,
     onOpenDocument: (Long) -> Unit,
     onLogout: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
     viewModel: AdminDashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
+        bottomBar = bottomBar,
         topBar = {
             TopAppBar(
                 title = { Text("Ratifica", fontWeight = FontWeight.ExtraBold) },

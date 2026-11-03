@@ -56,12 +56,14 @@ fun SignerDashboardScreen(
     onOpenDocument: (Long) -> Unit,
     onOpenSignature: () -> Unit,
     onLogout: () -> Unit,
+    bottomBar: @Composable () -> Unit = {},
     viewModel: SignerDashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lista = if (state.aba == AbaSignatario.PENDENTES) state.pendentes else state.assinados
 
     Scaffold(
+        bottomBar = bottomBar,
         topBar = {
             TopAppBar(
                 title = { Text("Ratifica", fontWeight = FontWeight.ExtraBold) },

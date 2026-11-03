@@ -21,6 +21,7 @@ import br.com.fiap.letssign.ui.screens.document.DocumentReviewScreen
 import br.com.fiap.letssign.ui.screens.signer.SignDocumentScreen
 import br.com.fiap.letssign.ui.screens.signer.SignerDashboardScreen
 import br.com.fiap.letssign.ui.screens.tracking.DocumentTrackingScreen
+import br.com.fiap.letssign.ui.screens.profile.ProfileScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -31,6 +32,15 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
     fun irParaLogin() {
         navController.navigate(Routes.LOGIN) {
             popUpTo(navController.graph.id) { inclusive = true }
+        }
+    }
+
+    /** Troca de aba sem empilhar telas: o "voltar" sempre leva à aba inicial. */
+    fun irParaAba(rota: String, inicio: String) {
+        navController.navigate(rota) {
+            popUpTo(inicio) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 
@@ -88,7 +98,30 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
                 onContinueDraft = { id -> navController.navigate(Routes.documentSigners(id)) },
                 onOpenDocument = { id -> navController.navigate(Routes.documentTracking(id)) },
-                onLogout = { irParaLogin() }
+                onLogout = { irParaLogin() },
+                bottomBar = {
+                    RatificaBottomBar(ABAS_ADMIN, Routes.ADMIN_HOME) { irParaAba(it, Routes.ADMIN_HOME) }
+                },
+            )
+        }
+
+        composable(Routes.ADMIN_PROFILE) {
+            ProfileScreen(
+                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
+                onLogout = { irParaLogin() },
+                bottomBar = {
+                    RatificaBottomBar(ABAS_ADMIN, Routes.ADMIN_PROFILE) { irParaAba(it, Routes.ADMIN_HOME) }
+                }
+            )
+        }
+
+        composable(Routes.SIGNER_PROFILE) {
+            ProfileScreen(
+                onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
+                onLogout = { irParaLogin() },
+                bottomBar = {
+                    RatificaBottomBar(ABAS_SIGNATARIO, Routes.SIGNER_PROFILE) { irParaAba(it, Routes.SIGNER_HOME) }
+                }
             )
         }
 
@@ -96,7 +129,11 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             SignersListScreen(
                 onBack = { navController.popBackStack() },
                 onNovo = { navController.navigate(Routes.signerForm()) },
-                onEditar = { id -> navController.navigate(Routes.signerForm(id)) }
+                onEditar = { id -> navController.navigate(Routes.signerForm(id)) },
+                mostrarVoltar = false,
+                bottomBar = {
+                    RatificaBottomBar(ABAS_ADMIN, Routes.SIGNERS) { irParaAba(it, Routes.ADMIN_HOME) }
+                }
             )
         }
 
@@ -131,7 +168,10 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             SignerDashboardScreen(
                 onOpenDocument = { id -> navController.navigate(Routes.signDocument(id)) },
                 onOpenSignature = { navController.navigate(Routes.SIGNATURE_EDIT) },
-                onLogout = { irParaLogin() }
+                onLogout = { irParaLogin() },
+                bottomBar = {
+                    RatificaBottomBar(ABAS_SIGNATARIO, Routes.SIGNER_HOME) { irParaAba(it, Routes.SIGNER_HOME) }
+                }
             )
         }
 
