@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 
 package br.com.fiap.letssign.ui.screens.document
 
@@ -59,6 +59,8 @@ import br.com.fiap.letssign.domain.model.SignerRole
 import br.com.fiap.letssign.ui.components.InitialsAvatar
 import br.com.fiap.letssign.ui.components.StepIndicator
 import br.com.fiap.letssign.ui.components.FecharCadastroButton
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 
 @Composable
 fun DocumentSignersScreen(
@@ -251,13 +253,16 @@ private fun ParticipanteCard(
             }
 
             Text("Papel no documento", style = MaterialTheme.typography.labelMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 SignerRole.entries.forEach { papel ->
                     val selecionado = participante.signer.papel == papel
                     FilterChip(
                         selected = selecionado,
                         onClick = { onPapel(papel) },
-                        label = { Text(papel.label) },
+                        label = { Text(papel.label, maxLines = 1) },
                         leadingIcon = if (selecionado) {
                             { Icon(Icons.Outlined.Check, contentDescription = null) }
                         } else null
