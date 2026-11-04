@@ -42,6 +42,7 @@ fun corDoStatus(status: DocumentStatus): Color = when (status) {
     DocumentStatus.ENVIADO, DocumentStatus.PARCIALMENTE_ASSINADO -> Color(0xFFD97706)
     DocumentStatus.CONCLUIDO -> Color(0xFF0E9F8E)
     DocumentStatus.RECUSADO -> Color(0xFFDC2626)
+    DocumentStatus.CANCELADO -> Color(0xFFC75450)
 }
 
 /** Texto curto e amigável de cada situação. */
@@ -52,6 +53,7 @@ fun rotuloDoStatus(status: DocumentStatus): String = when (status) {
     DocumentStatus.CONCLUIDO -> "Concluído"
     DocumentStatus.RECUSADO -> "Recusado"
     DocumentStatus.EXPIRADO -> "Expirado"
+    DocumentStatus.CANCELADO -> "Cancelado"
 }
 
 @Composable

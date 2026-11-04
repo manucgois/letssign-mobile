@@ -20,7 +20,8 @@ enum class DocumentStatus(val label: String) {
     PARCIALMENTE_ASSINADO("Parcialmente assinado"),
     CONCLUIDO("Concluído"),
     RECUSADO("Recusado"),
-    EXPIRADO("Expirado")
+    EXPIRADO("Expirado"),
+    CANCELADO("Cancelado")
 }
 
 /** Situação individual de cada signatário. */
@@ -38,7 +39,8 @@ enum class AuditEventType(val label: String) {
     ASSINADO("Assinatura realizada"),
     RECUSADO("Assinatura recusada"),
     CONCLUIDO("Documento concluído"),
-    NOVA_VERSAO("Nova versão criada")
+    NOVA_VERSAO("Nova versão criada"),
+    CANCELADO("Documento cancelado")
 }
 
 /** Tipo de identificação profissional no perfil de assinatura. */

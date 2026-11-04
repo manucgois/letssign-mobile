@@ -83,4 +83,7 @@ interface DocumentRepository {
     /** Apaga o rascunho por completo (documento, signatários, campos e arquivo). */
     suspend fun deleteDraft(ownerId: Long, documentId: Long): Result<Unit>
 
+    /** Cancela um documento enviado. Nada é apagado: o motivo vai para a trilha de auditoria. */
+    suspend fun cancelDocument(ownerId: Long, documentId: Long, motivo: String): Result<Unit>
+
 }

@@ -26,6 +26,7 @@ fun StatusBadge(status: DocumentStatus, modifier: Modifier = Modifier) {
         DocumentStatus.CONCLUIDO -> cores.secondaryContainer to cores.onSecondaryContainer
         DocumentStatus.RECUSADO -> cores.errorContainer to cores.onErrorContainer
         DocumentStatus.EXPIRADO -> cores.surfaceVariant to cores.onSurfaceVariant
+        DocumentStatus.CANCELADO -> cores.surfaceVariant to cores.error
     }
     Text(
         text = status.label,

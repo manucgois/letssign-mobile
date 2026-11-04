@@ -375,6 +375,49 @@ class RoomDocumentRepository @Inject constructor(
 
     }
 
+    // =================== Cancelamento ===================
+
+    override suspend fun cancelDocument(
+        ownerId: Long,
+        documentId: Long,
+        motivo: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val doc = documentDao.getById(documentId)
+            if (doc == null || doc.ownerId != ownerId) {
+                throw IllegalStateException("Documento não encontrado.")
+            }
+            // Regra: só cancela o que ainda está aguardando assinatura.
+            // Concluído é prova jurídica; rascunho se exclui.
+            if (doc.status != DocumentStatus.ENVIADO && doc.status != DocumentStatus.PARCIALMENTE_ASSINADO) {
+                throw IllegalStateException("Só é possível cancelar documentos que aguardam assinatura.")
+            }
+            if (motivo.isBlank()) {
+                throw IllegalArgumentException("Informe o motivo do cancelamento.")
+            }
+
+            // Status + auditoria na MESMA transação
+            database.withTransaction {
+                documentDao.update(doc.copy(status = DocumentStatus.CANCELADO))
+                auditEventDao.insert(
+                    AuditEventEntity(
+                        documentId = documentId,
+                        userId = ownerId,
+                        tipo = AuditEventType.CANCELADO,
+                        detalhe = "Motivo: ${motivo.trim()}"
+                    )
+                )
+            }
+            Result.success(Unit)
+        } catch (e: IllegalArgumentException) {
+            Result.failure(e)
+        } catch (e: IllegalStateException) {
+            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(Exception("Não foi possível cancelar o documento. Tente novamente."))
+        }
+    }
+
     override fun observeAuditEvents(documentId: Long): Flow<List<AuditEventEntity>> =
         auditEventDao.observeByDocument(documentId)
 

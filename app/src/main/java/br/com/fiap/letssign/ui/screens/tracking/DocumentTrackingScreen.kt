@@ -81,6 +81,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 
 @Composable
 fun DocumentTrackingScreen(
@@ -366,6 +372,14 @@ private fun Conteudo(
             }
         }
         Spacer(Modifier.height(8.dp))
+
+        if (state.podeCancelar) {
+            Spacer(Modifier.height(8.dp))
+            BotaoCancelarDocumento(onClick = viewModel::abrirCancelamento)
+        }
+        if (state.mostrandoCancelamento) {
+            DialogoCancelamento(state, viewModel)
+        }
     }
 }
 
@@ -409,6 +423,7 @@ private fun ItemLinhaDoTempo(evento: AuditEventEntity, ultimo: Boolean) {
         AuditEventType.CONCLUIDO -> Icons.Outlined.TaskAlt
         AuditEventType.RECUSADO -> Icons.Outlined.Close
         AuditEventType.NOVA_VERSAO -> Icons.Outlined.ContentCopy
+        AuditEventType.CANCELADO -> Icons.Outlined.Block
     }
     Row {
         // Coluna da esquerda: ícone + linha vertical ligando ao próximo evento
@@ -448,4 +463,65 @@ private fun ItemLinhaDoTempo(evento: AuditEventEntity, ultimo: Boolean) {
             )
         }
     }
+}
+
+@Composable
+private fun BotaoCancelarDocumento(onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(52.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+    ) {
+        Icon(Icons.Outlined.Block, contentDescription = null, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Cancelar documento")
+    }
+}
+
+@Composable
+private fun DialogoCancelamento(
+    state: DocumentTrackingUiState,
+    viewModel: DocumentTrackingViewModel
+) {
+    AlertDialog(
+        onDismissRequest = viewModel::fecharCancelamento,
+        icon = { Icon(Icons.Outlined.Block, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+        title = { Text("Cancelar documento?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Ninguém mais poderá assinar. O arquivo, as assinaturas já feitas e o histórico " +
+                            "continuam guardados, e o motivo fica registrado na trilha de auditoria.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedTextField(
+                    value = state.motivoCancelamento,
+                    onValueChange = viewModel::onMotivoCancelamento,
+                    label = { Text("Motivo") },
+                    placeholder = { Text("Ex.: cláusula 3 precisa ser revisada") },
+                    isError = state.erroCancelamento != null,
+                    supportingText = state.erroCancelamento?.let { erro -> { Text(erro) } },
+                    enabled = !state.cancelando,
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = viewModel::confirmarCancelamento,
+                enabled = !state.cancelando,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text(if (state.cancelando) "Cancelando…" else "Cancelar documento")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = viewModel::fecharCancelamento, enabled = !state.cancelando) {
+                Text("Voltar")
+            }
+        }
+    )
 }

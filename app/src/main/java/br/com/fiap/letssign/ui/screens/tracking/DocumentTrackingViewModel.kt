@@ -31,7 +31,12 @@ data class DocumentTrackingUiState(
     val adminPodeAssinar: Boolean = false,
     val paginaAtual: Int = 0,
     val paginaBitmap: Bitmap? = null,
-    val totalPaginas: Int = 0
+    val totalPaginas: Int = 0,
+    // Cancelamento
+    val mostrandoCancelamento: Boolean = false,
+    val motivoCancelamento: String = "",
+    val cancelando: Boolean = false,
+    val erroCancelamento: String? = null
 ) {
     /** Páginas além das do documento original = manifesto de assinaturas. */
     val ehManifesto: Boolean
@@ -39,6 +44,11 @@ data class DocumentTrackingUiState(
             val originais = documento?.quantidadePaginas ?: return false
             return paginaAtual >= originais
         }
+
+    /** Só documentos aguardando assinatura podem ser cancelados. */
+    val podeCancelar: Boolean
+        get() = documento?.status == DocumentStatus.ENVIADO ||
+                documento?.status == DocumentStatus.PARCIALMENTE_ASSINADO
 }
 
 @HiltViewModel
@@ -141,5 +151,37 @@ class DocumentTrackingViewModel @Inject constructor(
     fun proximaPagina() {
         val atual = _uiState.value.paginaAtual
         if (atual < totalPaginasExibidas() - 1) carregarPagina(atual + 1)
+    }
+
+    // ---------- Cancelamento ----------
+    fun abrirCancelamento() = _uiState.update {
+        it.copy(mostrandoCancelamento = true, motivoCancelamento = "", erroCancelamento = null)
+    }
+
+    fun fecharCancelamento() {
+        if (!_uiState.value.cancelando) _uiState.update { it.copy(mostrandoCancelamento = false) }
+    }
+
+    fun onMotivoCancelamento(valor: String) =
+        _uiState.update { it.copy(motivoCancelamento = valor, erroCancelamento = null) }
+
+    fun confirmarCancelamento() {
+        val s = _uiState.value
+        if (s.cancelando) return
+        if (s.motivoCancelamento.isBlank()) {
+            _uiState.update { it.copy(erroCancelamento = "Informe o motivo do cancelamento.") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(cancelando = true, erroCancelamento = null) }
+            documentRepository.cancelDocument(s.adminId, documentId, s.motivoCancelamento)
+                .onSuccess {
+                    // A tela se atualiza sozinha (o documento é observado "ao vivo")
+                    _uiState.update { it.copy(cancelando = false, mostrandoCancelamento = false) }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(cancelando = false, erroCancelamento = e.message) }
+                }
+        }
     }
 }

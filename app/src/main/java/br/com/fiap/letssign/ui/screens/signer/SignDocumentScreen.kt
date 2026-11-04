@@ -66,6 +66,8 @@ import br.com.fiap.letssign.ui.components.PdfPageView
 import br.com.fiap.letssign.ui.components.StatusBadge
 import br.com.fiap.letssign.ui.theme.VerdeValidado
 import br.com.fiap.letssign.util.DateFormatter
+import androidx.compose.material.icons.outlined.Block
+import br.com.fiap.letssign.domain.model.DocumentStatus
 
 @Composable
 fun SignDocumentScreen(
@@ -188,6 +190,23 @@ private fun ConteudoDocumento(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
+        }
+
+        if (state.documentoStatus == DocumentStatus.CANCELADO) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Block, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        "Este documento foi cancelado pelo remetente e não pode mais ser assinado.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
         }
 
         // ---------- Mensagem do remetente ----------
