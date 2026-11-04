@@ -67,7 +67,7 @@ fun SignerDashboardScreen(
             item {
                 HeroHeader(
                     saudacao = "Olá, ${state.primeiroNome}",
-                    titulo = "Seus documentos\npara assinar.",
+                    titulo = "Seus documentos para assinar.",
                     acaoTitulo = when (pendentes) {
                         0 -> "Tudo em dia"
                         1 -> "1 documento"

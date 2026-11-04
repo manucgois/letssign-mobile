@@ -47,7 +47,7 @@ class SignerDashboardViewModel @Inject constructor(
                 temAssinatura = usuario?.assinaturaConfigurada ?: false,
                 aba = abaAtual,
                 pendentes = lista.filter {
-                    it.meuStatus == SignerStatus.PENDENTE && it.document.status != DocumentStatus.CANCELADO
+                    it.meuStatus == SignerStatus.PENDENTE &&
                             (it.document.status == DocumentStatus.ENVIADO ||
                                     it.document.status == DocumentStatus.PARCIALMENTE_ASSINADO)
                 },

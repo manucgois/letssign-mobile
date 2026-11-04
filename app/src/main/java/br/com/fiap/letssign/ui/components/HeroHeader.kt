@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import br.com.fiap.letssign.R
 import br.com.fiap.letssign.ui.theme.AzulRatifica
+import androidx.compose.ui.unit.sp
 
 /** Cabeçalho azul de boas-vindas, com um atalho opcional para a próxima ação. */
 @Composable
@@ -65,7 +66,15 @@ fun HeroHeader(
 
         Column {
             Text(saudacao, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.75f))
-            Text(titulo, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+            Text(
+                titulo,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontSize = 19.sp,
+                    lineHeight = 26.sp
+                ),
+                color = Color.White,
+                maxLines = 1
+            )
         }
 
         if (acaoTitulo != null) {

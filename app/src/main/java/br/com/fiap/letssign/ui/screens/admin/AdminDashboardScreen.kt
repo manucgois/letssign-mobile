@@ -85,7 +85,7 @@ fun AdminDashboardScreen(
                 val emAndamento = state.totalAndamento
                 HeroHeader(
                     saudacao = "Olá, ${state.primeiroNome}",
-                    titulo = "Seus documentos\nsob controle.",
+                    titulo = "Seus documentos sob controle.",
                     acaoTitulo = when (emAndamento) {
                         0 -> "Tudo em dia"
                         1 -> "1 documento"
