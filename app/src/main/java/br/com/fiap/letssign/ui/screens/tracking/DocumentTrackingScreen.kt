@@ -141,7 +141,8 @@ private fun Conteudo(
     val total = state.participantes.size
     val assinados = state.participantes.count { it.signer.status == SignerStatus.ASSINADO }
     val concluido = doc.status == DocumentStatus.CONCLUIDO
-    val totalPaginas = if (concluido) doc.quantidadePaginas + 1 else doc.quantidadePaginas
+    // Páginas reais do PDF exibido (o final inclui o manifesto, que pode ter mais de 1 página)
+    val totalPaginas = state.totalPaginas.takeIf { it > 0 } ?: doc.quantidadePaginas
 
     Column(
         modifier = modifier
@@ -341,7 +342,7 @@ private fun Conteudo(
                     }
                     Text(
                         if (concluido && state.paginaAtual == totalPaginas - 1) "Manifesto"
-                        else "Página ${state.paginaAtual + 1} de ${doc.quantidadePaginas}",
+                        else ("Página ${state.paginaAtual + 1} de $totalPaginas" + if (state.ehManifesto) " · Manifesto" else ""),
                         style = MaterialTheme.typography.titleSmall
                     )
                     FilledTonalIconButton(

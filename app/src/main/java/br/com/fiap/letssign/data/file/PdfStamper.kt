@@ -102,13 +102,14 @@ class PdfStamper @Inject constructor(
                     val caixa = pagina.cropBox
                     PDPageContentStream(pdf, pagina, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
                         semCampoAqui.forEachIndexed { i, sid ->
-                            val largura = 64f
-                            val altura = 30f
-                            val margem = 14f
-                            val espaco = 8f
-                            // Uma ao lado da outra, a partir do canto inferior direito
-                            val x = caixa.lowerLeftX + caixa.width - margem - (i + 1) * largura - i * espaco
-                            val y = caixa.lowerLeftY + margem
+                            val largura = 48f
+                            val altura = 26f
+                            val margemDireita = 6f
+                            val inicioY = 56f   // acima da área de rodapé
+                            val espaco = 6f
+                            // Uma acima da outra, na margem direita, logo acima do rodapé
+                            val x = caixa.lowerLeftX + caixa.width - margemDireita - largura
+                            val y = caixa.lowerLeftY + inicioY + i * (altura + espaco)
                             desenharRubrica(pdf, cs, assinaturas.getValue(sid), x, y, largura, altura, fonte) { cursiva }
                         }
                     }

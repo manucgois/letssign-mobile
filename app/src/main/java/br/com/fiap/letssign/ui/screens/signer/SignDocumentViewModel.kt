@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import br.com.fiap.letssign.domain.repository.DocumentRepository
 
 data class SignDocumentUiState(
     val carregando: Boolean = true,
@@ -36,6 +37,7 @@ data class SignDocumentUiState(
     val meusCampos: List<SignatureFieldEntity> = emptyList(),
     val paginasParaRubricar: List<Int> = emptyList(),
     val totalPaginas: Int = 0,
+    val paginasOriginais: Int = 0,
     val paginaAtual: Int = 0,
     val paginaBitmap: Bitmap? = null,
     val temPerfil: Boolean = false,
@@ -52,13 +54,19 @@ data class SignDocumentUiState(
     val podeAssinar: Boolean
         get() = meuStatus == SignerStatus.PENDENTE &&
                 (documentoStatus == DocumentStatus.ENVIADO || documentoStatus == DocumentStatus.PARCIALMENTE_ASSINADO)
+
+    /** Páginas além das do documento original = manifesto de assinaturas. */
+    val ehManifesto: Boolean
+        get() = paginasOriginais > 0 && paginaAtual >= paginasOriginais
+
 }
 
 @HiltViewModel
 class SignDocumentViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val authRepository: AuthRepository,
-    private val signingRepository: SigningRepository
+    private val signingRepository: SigningRepository,
+    private val documentRepository: DocumentRepository
 ) : ViewModel() {
 
     private val documentId: Long = savedStateHandle.get<Long>("documentId") ?: -1L
@@ -86,6 +94,7 @@ class SignDocumentViewModel @Inject constructor(
             val paginaInicial = if (ctx.eu.status == SignerStatus.PENDENTE)
                 ctx.meusCampos.minOfOrNull { it.pagina } ?: 0 else 0
             val hashFinal = doc.hashFinal
+            val total = documentRepository.countPages(documentId, userId, versaoFinal = true)
 
             _uiState.update {
                 it.copy(
@@ -100,7 +109,8 @@ class SignDocumentViewModel @Inject constructor(
                     documentoStatus = doc.status,
                     codigoHashFinal = hashFinal?.let { h -> FileHasher.shortCode(h) },
                     meusCampos = ctx.meusCampos,
-                    totalPaginas = doc.quantidadePaginas,
+                    totalPaginas = total,
+                    paginasOriginais = doc.quantidadePaginas,
                     temPerfil = perfil != null,
                     resumoCarimbo = perfil?.let { p ->
                         StampFormatter.linhaPrincipal(p.nomeExibicao, p.cargo, p.tipoIdentificacao, p.numeroIdentificacao)

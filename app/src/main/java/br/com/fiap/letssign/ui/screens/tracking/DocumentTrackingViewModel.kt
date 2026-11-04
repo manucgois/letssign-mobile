@@ -30,8 +30,16 @@ data class DocumentTrackingUiState(
     val eventos: List<AuditEventEntity> = emptyList(),
     val adminPodeAssinar: Boolean = false,
     val paginaAtual: Int = 0,
-    val paginaBitmap: Bitmap? = null
-)
+    val paginaBitmap: Bitmap? = null,
+    val totalPaginas: Int = 0
+) {
+    /** Páginas além das do documento original = manifesto de assinaturas. */
+    val ehManifesto: Boolean
+        get() {
+            val originais = documento?.quantidadePaginas ?: return false
+            return paginaAtual >= originais
+        }
+}
 
 @HiltViewModel
 class DocumentTrackingViewModel @Inject constructor(
@@ -89,7 +97,16 @@ class DocumentTrackingViewModel @Inject constructor(
                         )
                     }
 
-                    // Nova versão assinada → redesenha as páginas
+                    // Nova versão assinada → reconta e redesenha as páginas
+                    if (arquivoMudou || _uiState.value.totalPaginas == 0) {
+                        val total = documentRepository.countPages(documentId, admin.id, versaoFinal = true)
+                        _uiState.update {
+                            it.copy(
+                                totalPaginas = total,
+                                paginaAtual = it.paginaAtual.coerceAtMost((total - 1).coerceAtLeast(0))
+                            )
+                        }
+                    }
                     if (arquivoMudou || _uiState.value.paginaBitmap == null) {
                         cachePaginas.clear()
                         carregarPagina(_uiState.value.paginaAtual)
@@ -114,10 +131,7 @@ class DocumentTrackingViewModel @Inject constructor(
     }
 
     /** Total de páginas do arquivo exibido (o PDF final tem as páginas do manifesto a mais). */
-    private fun totalPaginasExibidas(): Int {
-        val d = _uiState.value.documento ?: return 0
-        return if (d.status == DocumentStatus.CONCLUIDO) d.quantidadePaginas + 1 else d.quantidadePaginas
-    }
+    private fun totalPaginasExibidas(): Int = _uiState.value.totalPaginas
 
     fun paginaAnterior() {
         val atual = _uiState.value.paginaAtual

@@ -51,6 +51,10 @@ interface DocumentRepository {
         versaoFinal: Boolean = false
     ): Bitmap?
 
+
+    /** Quantas páginas tem o arquivo exibido (o final inclui o manifesto). */
+    suspend fun countPages(documentId: Long, userId: Long, versaoFinal: Boolean): Int
+
     // ----- Etapa 4: envio -----
     /**
      * Envia o documento para assinatura. A mesma idempotencyKey em várias tentativas

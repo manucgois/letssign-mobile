@@ -273,7 +273,7 @@ private fun ConteudoDocumento(
             FilledTonalIconButton(onClick = viewModel::paginaAnterior, enabled = state.paginaAtual > 0) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Página anterior")
             }
-            Text("Página ${state.paginaAtual + 1} de ${state.totalPaginas}", style = MaterialTheme.typography.titleSmall)
+            Text("Página ${state.paginaAtual + 1} de ${state.totalPaginas}" + if (state.ehManifesto) " · Manifesto" else "", style = MaterialTheme.typography.titleSmall)
             FilledTonalIconButton(
                 onClick = viewModel::proximaPagina,
                 enabled = state.paginaAtual < state.totalPaginas - 1

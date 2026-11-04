@@ -32,6 +32,8 @@ import br.com.fiap.letssign.data.local.entity.SendRequestEntity
 import br.com.fiap.letssign.domain.model.EnvioResultado
 import br.com.fiap.letssign.domain.model.SendStatus
 import java.io.IOException
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
 
 class RoomDocumentRepository @Inject constructor(
     private val database: AppDatabase,
@@ -249,6 +251,23 @@ class RoomDocumentRepository @Inject constructor(
         val caminho = if (versaoFinal && final != null) final else doc.caminhoArquivo
         runCatching { storage.renderPage(File(caminho), pagina, larguraPx) }.getOrNull()
     }
+
+    override suspend fun countPages(
+        documentId: Long,
+        userId: Long,
+        versaoFinal: Boolean
+    ): Int = withContext(Dispatchers.IO) {
+        val doc = getDocument(documentId, userId) ?: return@withContext 0
+        val final = doc.caminhoArquivoFinal
+        val caminho = if (versaoFinal && final != null) final else doc.caminhoArquivo
+        contarPaginas(File(caminho)) ?: doc.quantidadePaginas
+    }
+
+    private fun contarPaginas(arquivo: File): Int? = runCatching {
+        ParcelFileDescriptor.open(arquivo, ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
+            PdfRenderer(fd).use { it.pageCount }
+        }
+    }.getOrNull()
 
     // =================== Etapa 4: envio ===================
 
