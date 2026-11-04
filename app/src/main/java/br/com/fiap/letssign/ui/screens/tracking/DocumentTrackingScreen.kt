@@ -69,6 +69,18 @@ import br.com.fiap.letssign.ui.components.corDoSignatario
 import br.com.fiap.letssign.util.DateFormatter
 import br.com.fiap.letssign.util.FileHasher
 import java.io.File
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.TextButton
 
 @Composable
 fun DocumentTrackingScreen(
@@ -274,23 +286,71 @@ private fun Conteudo(
             }
         }
 
-        PdfPageView(bitmap = state.paginaBitmap, campos = emptyList())
+        // ---------- Prévia do documento (recolhida por padrão) ----------
+        var mostrarDocumento by remember { mutableStateOf(false) }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilledTonalIconButton(onClick = viewModel::paginaAnterior, enabled = state.paginaAtual > 0) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Página anterior")
+        Card(shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.Description,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "${doc.quantidadePaginas} página(s)" + if (concluido) " + manifesto" else "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        doc.nomeArquivo,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+                TextButton(onClick = { mostrarDocumento = !mostrarDocumento }) {
+                    Text(if (mostrarDocumento) "Ocultar" else "Ver documento")
+                    Icon(
+                        if (mostrarDocumento) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                        contentDescription = null
+                    )
+                }
             }
-            Text(
-                if (concluido && state.paginaAtual == totalPaginas - 1) "Manifesto"
-                else "Página ${state.paginaAtual + 1} de ${doc.quantidadePaginas}",
-                style = MaterialTheme.typography.titleSmall
-            )
-            FilledTonalIconButton(onClick = viewModel::proximaPagina, enabled = state.paginaAtual < totalPaginas - 1) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Próxima página")
+        }
+
+        AnimatedVisibility(
+            visible = mostrarDocumento,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                PdfPageView(bitmap = state.paginaBitmap, campos = emptyList())
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilledTonalIconButton(onClick = viewModel::paginaAnterior, enabled = state.paginaAtual > 0) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Página anterior")
+                    }
+                    Text(
+                        if (concluido && state.paginaAtual == totalPaginas - 1) "Manifesto"
+                        else "Página ${state.paginaAtual + 1} de ${doc.quantidadePaginas}",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    FilledTonalIconButton(
+                        onClick = viewModel::proximaPagina,
+                        enabled = state.paginaAtual < totalPaginas - 1
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Próxima página")
+                    }
+                }
             }
         }
 

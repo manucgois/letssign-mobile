@@ -24,7 +24,9 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, "letssign.db").build()
+        Room.databaseBuilder(context, AppDatabase::class.java, "letssign.db")
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides fun provideUserDao(db: AppDatabase): UserDao = db.userDao()
     @Provides fun provideSignatureProfileDao(db: AppDatabase): SignatureProfileDao = db.signatureProfileDao()

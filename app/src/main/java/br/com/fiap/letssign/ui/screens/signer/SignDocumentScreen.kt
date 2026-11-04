@@ -245,6 +245,15 @@ private fun ConteudoDocumento(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (state.paginasParaRubricar.isNotEmpty()) {
+                Text(
+                    "Sua rubrica também será aplicada no rodapé " +
+                            (if (state.paginasParaRubricar.size == 1) "da página " else "das páginas ") +
+                            state.paginasParaRubricar.joinToString(", ") + ".",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
 
         // ---------- Páginas ----------

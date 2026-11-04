@@ -202,7 +202,8 @@ fun SignatureSetupScreen(
             // ---------- Estilo ----------
             SectionTitle("Como você quer assinar")
 
-            val estilos = SignatureStyle.entries
+            // A rubrica agora tem uma seção própria (logo abaixo)
+            val estilos = listOf(SignatureStyle.DESENHADA, SignatureStyle.DIGITADA)
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 estilos.forEachIndexed { index, estilo ->
                     SegmentedButton(
@@ -222,10 +223,8 @@ fun SignatureSetupScreen(
             }
 
             when (state.estilo) {
-                SignatureStyle.DESENHADA ->
+                SignatureStyle.DESENHADA, SignatureStyle.RUBRICA ->
                     AreaDeDesenho(assinaturaPad, state.assinaturaPath, "Assine aqui com o dedo")
-                SignatureStyle.RUBRICA ->
-                    AreaDeDesenho(rubricaPad, state.rubricaPath, "Faça sua rubrica aqui")
                 SignatureStyle.DIGITADA ->
                     OutlinedTextField(
                         value = state.textoDigitado,
@@ -244,15 +243,29 @@ fun SignatureSetupScreen(
                 )
             }
 
+            // ---------- Rubrica ----------
+            SectionTitle("Rubrica (opcional)")
+            Text(
+                "Usada quando o documento pede rubrica nas páginas sem campo de assinatura. " +
+                        "Se você não desenhar, usamos suas iniciais.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            AreaDeDesenho(rubricaPad, state.rubricaPath, "Faça sua rubrica (iniciais)")
+
+            if (state.visualErro != null) {
+                Text(
+                    state.visualErro ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             // ---------- Prévia ----------
             SectionTitle("Prévia do carimbo")
             CarimboPreview(
                 state = state,
-                padAtual = when (state.estilo) {
-                    SignatureStyle.DESENHADA -> assinaturaPad
-                    SignatureStyle.RUBRICA -> rubricaPad
-                    SignatureStyle.DIGITADA -> null
-                }
+                padAtual = if (state.estilo == SignatureStyle.DIGITADA) null else assinaturaPad
             )
 
             if (state.erroGeral != null) {
@@ -263,13 +276,10 @@ fun SignatureSetupScreen(
 
             Button(
                 onClick = {
-                    val desenho = when (state.estilo) {
-                        SignatureStyle.DESENHADA -> assinaturaPad.toBitmap()
-                        SignatureStyle.RUBRICA -> rubricaPad.toBitmap()
-                        SignatureStyle.DIGITADA -> null
-                    }
-                    viewModel.salvar(desenho)
+                    val desenho = if (state.estilo == SignatureStyle.DIGITADA) null else assinaturaPad.toBitmap()
+                    viewModel.salvar(desenho = desenho, rubrica = rubricaPad.toBitmap())
                 },
+
                 enabled = !state.salvando,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -407,11 +417,7 @@ private fun AreaDeDesenho(padState: SignaturePadState, caminhoSalvo: String?, di
 /** Prévia do carimbo: sempre em fundo branco, como ficará no PDF. */
 @Composable
 private fun CarimboPreview(state: SignatureSetupUiState, padAtual: SignaturePadState?) {
-    val caminhoSalvo = when (state.estilo) {
-        SignatureStyle.DESENHADA -> state.assinaturaPath
-        SignatureStyle.RUBRICA -> state.rubricaPath
-        SignatureStyle.DIGITADA -> null
-    }
+    val caminhoSalvo = if (state.estilo == SignatureStyle.DIGITADA) null else state.assinaturaPath
     val imagemSalva = remember(caminhoSalvo) {
         caminhoSalvo?.let { BitmapFactory.decodeFile(it)?.asImageBitmap() }
     }

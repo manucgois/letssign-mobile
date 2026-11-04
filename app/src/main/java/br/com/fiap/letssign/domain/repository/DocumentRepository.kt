@@ -62,6 +62,7 @@ interface DocumentRepository {
         documentId: Long,
         mensagem: String?,
         idempotencyKey: String,
+        exigirRubrica: Boolean = false,
         simularFalha: Boolean = false
     ): Result<EnvioResultado>
 

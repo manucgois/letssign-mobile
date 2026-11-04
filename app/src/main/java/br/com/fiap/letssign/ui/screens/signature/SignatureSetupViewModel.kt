@@ -56,7 +56,9 @@ class SignatureSetupViewModel @Inject constructor(
                     tipoIdentificacao = p?.tipoIdentificacao ?: IdentificationType.CPF,
                     numero = p?.numeroIdentificacao.orEmpty(),
                     empresa = p?.empresa ?: user.empresa,
-                    estilo = p?.estiloAssinatura ?: SignatureStyle.DESENHADA,
+                    // "Rubrica" deixou de ser estilo: quem tinha escolhido passa para "Desenhar"
+                    estilo = p?.estiloAssinatura
+                        ?.takeIf { it != SignatureStyle.RUBRICA } ?: SignatureStyle.DESENHADA,
                     textoDigitado = p?.textoDigitado ?: user.nomeCompleto,
                     assinaturaPath = p?.assinaturaPath,
                     rubricaPath = p?.rubricaPath
@@ -75,43 +77,31 @@ class SignatureSetupViewModel @Inject constructor(
     fun onTextoDigitadoChange(v: String) =
         _uiState.update { it.copy(textoDigitado = v, visualErro = null) }
 
-    /** desenho = imagem do quadro do estilo escolhido (null se vazio ou se for "Digitar"). */
-    fun salvar(desenho: Bitmap?) {
+
+    /** desenho = assinatura desenhada (null se vazio ou "Digitar"); rubrica = rubrica desenhada (opcional). */
+    fun salvar(desenho: Bitmap?, rubrica: Bitmap?) {
         val s = _uiState.value
         if (s.salvando) return
         val userId = s.userId ?: return
 
-        // 1. Validação dos dados obrigatórios
         val nomeErro = if (s.nome.isBlank()) "Informe seu nome completo" else null
         val empresaErro = if (s.empresa.isBlank()) "Informe a empresa" else null
         val numeroErro = Validators.validateIdentification(s.tipoIdentificacao, s.numero)
-
-        val desenhoJaSalvo = when (s.estilo) {
-            SignatureStyle.DESENHADA -> s.assinaturaPath
-            SignatureStyle.RUBRICA -> s.rubricaPath
-            SignatureStyle.DIGITADA -> null
-        }
         val visualErro = when {
             s.estilo == SignatureStyle.DIGITADA && s.textoDigitado.isBlank() ->
                 "Digite como você quer assinar"
-            s.estilo != SignatureStyle.DIGITADA && desenho == null && desenhoJaSalvo == null ->
-                "Desenhe no quadro acima"
+            s.estilo != SignatureStyle.DIGITADA && desenho == null && s.assinaturaPath == null ->
+                "Desenhe sua assinatura no quadro"
             else -> null
         }
 
         if (listOf(nomeErro, empresaErro, numeroErro, visualErro).any { it != null }) {
             _uiState.update {
-                it.copy(
-                    nomeErro = nomeErro,
-                    empresaErro = empresaErro,
-                    numeroErro = numeroErro,
-                    visualErro = visualErro
-                )
+                it.copy(nomeErro = nomeErro, empresaErro = empresaErro, numeroErro = numeroErro, visualErro = visualErro)
             }
             return
         }
 
-        // 2. Monta o perfil (CPF salvo só com números)
         val numeroSalvo = if (s.tipoIdentificacao == IdentificationType.CPF)
             Validators.onlyDigits(s.numero) else s.numero.trim()
 
@@ -129,14 +119,11 @@ class SignatureSetupViewModel @Inject constructor(
             criadoEm = perfilExistente?.criadoEm ?: System.currentTimeMillis()
         )
 
-        // 3. Salva
         viewModelScope.launch {
             _uiState.update { it.copy(salvando = true, erroGeral = null) }
-            profileRepository.saveProfile(profile, desenho)
+            profileRepository.saveProfile(profile, desenho, rubrica)
                 .onSuccess { _uiState.update { it.copy(salvando = false, salvo = true) } }
-                .onFailure { e ->
-                    _uiState.update { it.copy(salvando = false, erroGeral = e.message) }
-                }
+                .onFailure { e -> _uiState.update { it.copy(salvando = false, erroGeral = e.message) } }
         }
     }
 }

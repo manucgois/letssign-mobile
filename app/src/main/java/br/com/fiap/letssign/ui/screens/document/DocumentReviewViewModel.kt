@@ -39,6 +39,7 @@ data class DocumentReviewUiState(
     val erroEnvio: String? = null,
     val tentativasComFalha: Int = 0,
     val simularFalha: Boolean = false,
+    val exigirRubrica: Boolean = false,
     val resultado: EnvioResultado? = null
 )
 
@@ -101,7 +102,8 @@ class DocumentReviewViewModel @Inject constructor(
                     totalPaginas = doc.quantidadePaginas,
                     codigoHash = FileHasher.shortCode(doc.hashOriginal),
                     mensagem = doc.mensagemConvite
-                        ?: "Olá! Você recebeu o documento \"${doc.titulo}\" para assinatura no Ratifica."
+                        ?: "Olá! Você recebeu o documento \"${doc.titulo}\" para assinatura no Ratifica.",
+                    exigirRubrica = doc.exigirRubrica
                 )
             }
             carregarPagina(0)
@@ -152,6 +154,8 @@ class DocumentReviewViewModel @Inject constructor(
 
     fun alternarSimulacao(ativar: Boolean) = _uiState.update { it.copy(simularFalha = ativar) }
 
+    fun alternarRubrica(ativar: Boolean) = _uiState.update { it.copy(exigirRubrica = ativar) }
+
     // ---------- Envio ----------
     fun pedirConfirmacao() {
         if (_uiState.value.enviando) return
@@ -171,6 +175,7 @@ class DocumentReviewViewModel @Inject constructor(
                 documentId = documentId,
                 mensagem = s.mensagem,
                 idempotencyKey = idempotencyKey,
+                exigirRubrica = s.exigirRubrica,
                 simularFalha = s.simularFalha
             )
                 .onSuccess { resultado ->

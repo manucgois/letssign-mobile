@@ -73,10 +73,17 @@ fun SignerDashboardScreen(
                         1 -> "1 documento"
                         else -> "$pendentes documentos"
                     },
-                    acaoSubtitulo = if (pendentes == 0) "Nenhuma assinatura pendente"
-                    else "aguardando a sua assinatura",
+                    acaoSubtitulo = when (pendentes) {
+                        0 -> "Nenhuma assinatura pendente"
+                        1 -> "Toque para abrir e assinar"
+                        else -> "aguardando a sua assinatura"
+                    },
                     acaoIcone = if (pendentes == 0) Icons.Outlined.TaskAlt else Icons.Outlined.Draw,
-                    onAcao = if (pendentes == 0) null else { { viewModel.onAba(AbaSignatario.PENDENTES) } }
+                    onAcao = when (pendentes) {
+                        0 -> null
+                        1 -> { { onOpenDocument(state.pendentes.first().document.id) } }
+                        else -> { { viewModel.onAba(AbaSignatario.PENDENTES) } }
+                    }
                 )
             }
 

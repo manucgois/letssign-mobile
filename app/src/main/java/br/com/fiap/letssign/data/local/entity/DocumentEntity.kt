@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import br.com.fiap.letssign.domain.model.DocumentStatus
+import androidx.room.ColumnInfo
 
 @Entity(
     tableName = "documents",
@@ -35,5 +36,8 @@ data class DocumentEntity(
     val criadoEm: Long = System.currentTimeMillis(),
     val enviadoEm: Long? = null,
     val concluidoEm: Long? = null,
-    val expiraEm: Long? = null
+    val expiraEm: Long? = null,
+
+    @ColumnInfo(defaultValue = "0")
+    val exigirRubrica: Boolean = false
 )

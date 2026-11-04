@@ -34,6 +34,7 @@ data class SignDocumentUiState(
     val documentoStatus: DocumentStatus = DocumentStatus.ENVIADO,
     val codigoHashFinal: String? = null,
     val meusCampos: List<SignatureFieldEntity> = emptyList(),
+    val paginasParaRubricar: List<Int> = emptyList(),
     val totalPaginas: Int = 0,
     val paginaAtual: Int = 0,
     val paginaBitmap: Bitmap? = null,
@@ -103,7 +104,12 @@ class SignDocumentViewModel @Inject constructor(
                     temPerfil = perfil != null,
                     resumoCarimbo = perfil?.let { p ->
                         StampFormatter.linhaPrincipal(p.nomeExibicao, p.cargo, p.tipoIdentificacao, p.numeroIdentificacao)
-                    }.orEmpty()
+                    }.orEmpty(),
+                    paginasParaRubricar = if (doc.exigirRubrica)
+                        (0 until doc.quantidadePaginas)
+                            .filter { p -> ctx.meusCampos.none { it.pagina == p } }
+                            .map { it + 1 }
+                    else emptyList(),
                 )
             }
             cachePaginas.clear()

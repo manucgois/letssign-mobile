@@ -16,6 +16,8 @@ import br.com.fiap.letssign.data.local.entity.SendRequestEntity
 import br.com.fiap.letssign.data.local.entity.SignatureFieldEntity
 import br.com.fiap.letssign.data.local.entity.SignatureProfileEntity
 import br.com.fiap.letssign.data.local.entity.UserEntity
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
@@ -27,7 +29,7 @@ import br.com.fiap.letssign.data.local.entity.UserEntity
         AuditEventEntity::class,
         SendRequestEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -38,4 +40,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun signatureFieldDao(): SignatureFieldDao
     abstract fun auditEventDao(): AuditEventDao
     abstract fun sendRequestDao(): SendRequestDao
+    companion object {
+        /** Versão 1 → 2: o documento passa a ter a opção "exigir rubrica nas páginas". */
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE documents ADD COLUMN exigirRubrica INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+    }
+
 }

@@ -31,7 +31,8 @@ data class Manifesto(
     val paginas: Int,
     val hashOriginal: String,
     val assinaturas: List<CarimboSnapshot>,
-    val eventos: List<LinhaManifesto>
+    val eventos: List<LinhaManifesto>,
+    val rubricaNasPaginas: Boolean = false
 )
 
 /**
@@ -55,7 +56,8 @@ class PdfStamper @Inject constructor(
         original: File,
         campos: List<SignatureFieldEntity>,
         assinaturas: Map<Long, CarimboSnapshot>,   // chave = id do participante (signerId)
-        manifesto: Manifesto?
+        manifesto: Manifesto?,
+        rubricaNasPaginas: Boolean = false
     ): File {
         val destino = File(pasta, "doc_${documentId}_${System.currentTimeMillis()}.pdf")
 
@@ -84,6 +86,32 @@ class PdfStamper @Inject constructor(
 
                 PDPageContentStream(pdf, pagina, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
                     desenharCarimbo(pdf, cs, carimbo, x, y, largura, altura, fonte, negrito) { cursiva }
+                }
+            }
+
+            // Rubricas: cada signatário rubrica as páginas em que NÃO tem campo de assinatura
+            if (rubricaNasPaginas) {
+                val signatarios = assinaturas.keys.sorted()
+                for (indicePagina in 0 until pdf.numberOfPages) {
+                    val semCampoAqui = signatarios.filter { sid ->
+                        campos.none { it.signerId == sid && it.pagina == indicePagina }
+                    }
+                    if (semCampoAqui.isEmpty()) continue
+
+                    val pagina = pdf.getPage(indicePagina)
+                    val caixa = pagina.cropBox
+                    PDPageContentStream(pdf, pagina, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
+                        semCampoAqui.forEachIndexed { i, sid ->
+                            val largura = 64f
+                            val altura = 30f
+                            val margem = 14f
+                            val espaco = 8f
+                            // Uma ao lado da outra, a partir do canto inferior direito
+                            val x = caixa.lowerLeftX + caixa.width - margem - (i + 1) * largura - i * espaco
+                            val y = caixa.lowerLeftY + margem
+                            desenharRubrica(pdf, cs, assinaturas.getValue(sid), x, y, largura, altura, fonte) { cursiva }
+                        }
+                    }
                 }
             }
 
@@ -147,6 +175,46 @@ class PdfStamper @Inject constructor(
             "Assinado em ${DateFormatter.dataHora(c.assinadoEm)} · cód. ${c.codigo}",
             tamanhoTexto * 0.9f, x + margem, y + alturaTexto - tamanhoTexto * 2.3f, w - 2 * margem
         )
+    }
+
+    /** Rubrica no rodapé: o desenho (ou as iniciais em cursiva) + o primeiro nome. */
+    private fun desenharRubrica(
+        pdf: PDDocument,
+        cs: PDPageContentStream,
+        c: CarimboSnapshot,
+        x: Float, y: Float, w: Float, h: Float,
+        fonte: PDFont,
+        cursiva: () -> PDFont
+    ) {
+        val alturaTexto = 6f
+        val alturaVisual = h - alturaTexto
+
+        val imagem = c.rubricaPath
+            ?.takeIf { File(it).exists() }
+            ?.let { BitmapFactory.decodeFile(it) }
+            ?.let { recortarTransparente(it) }
+
+        if (imagem != null) {
+            val img = LosslessFactory.createFromImage(pdf, imagem)
+            val escala = minOf(w / imagem.width, alturaVisual / imagem.height)
+            val iw = imagem.width * escala
+            val ih = imagem.height * escala
+            cs.drawImage(img, x + (w - iw) / 2, y + alturaTexto + (alturaVisual - ih) / 2, iw, ih)
+        } else {
+            val f = cursiva()
+            val iniciais = seguro(f, c.iniciais.ifBlank { c.nome.take(2) })
+            var tamanho = alturaVisual * 0.8f
+            while (tamanho > 4f && larguraTexto(f, iniciais, tamanho) > w) tamanho -= 0.5f
+            val largura = larguraTexto(f, iniciais, tamanho)
+            escrever(cs, f, iniciais, tamanho, x + (w - largura) / 2, y + alturaTexto + alturaVisual * 0.2f)
+        }
+
+        cs.setStrokingColor(tintaR, tintaG, tintaB)
+        cs.setLineWidth(0.3f)
+        cs.moveTo(x, y + alturaTexto)
+        cs.lineTo(x + w, y + alturaTexto)
+        cs.stroke()
+        linhaQueCabe(cs, fonte, "Rubrica · ${c.nome.substringBefore(" ")}", 4f, x, y + 1f, w)
     }
 
     /** Corta as bordas transparentes do desenho, para a assinatura ocupar bem o campo. */
@@ -227,6 +295,9 @@ class PdfStamper @Inject constructor(
 
         paragrafo("Documento: ${m.tituloDocumento}", negrito, 11f)
         paragrafo("Arquivo: ${m.nomeArquivo} · ${m.paginas} página(s)", fonte, 10f)
+        if (m.rubricaNasPaginas) {
+            paragrafo("Rubrica: exigida pelo remetente e aplicada nas páginas sem campo de assinatura de cada signatário.", fonte, 9f)
+        }
         espaco()
         paragrafo("Impressão digital (SHA-256) do documento original:", fonte, 9f)
         paragrafo(m.hashOriginal, fonte, 8f)

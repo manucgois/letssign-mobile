@@ -308,6 +308,27 @@ private fun ConteudoRevisao(
             }
         }
 
+        // ---------- Rubrica (só faz sentido com mais de uma página) ----------
+        if (state.totalPaginas > 1) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Rubrica nas demais páginas", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "Cada signatário rubrica, no rodapé, as páginas em que não tem campo de assinatura.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Switch(checked = state.exigirRubrica, onCheckedChange = viewModel::alternarRubrica)
+                }
+            }
+        }
+
         // ---------- Mensagem ----------
         Text("Mensagem do convite", style = MaterialTheme.typography.titleMedium)
         OutlinedTextField(

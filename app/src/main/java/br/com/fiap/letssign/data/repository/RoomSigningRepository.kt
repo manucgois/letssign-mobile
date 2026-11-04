@@ -173,8 +173,10 @@ class RoomSigningRepository @Inject constructor(
                             dataHora = DateFormatter.dataHora(it.dataHora),
                             descricao = listOfNotNull(it.tipo.label, it.detalhe).joinToString(" · ")
                         )
-                    }
+                    },
+                    rubricaNasPaginas = doc.exigirRubrica
                 )
+
             } else null
 
             // ---------- 4. Gera o PDF ANTES de gravar (se falhar, nada muda no banco) ----------
@@ -183,9 +185,12 @@ class RoomSigningRepository @Inject constructor(
                 original = File(doc.caminhoArquivo),
                 campos = fieldDao.getByDocument(documentId),
                 assinaturas = assinaturas,
-                manifesto = manifesto
+                manifesto = manifesto,
+                rubricaNasPaginas = doc.exigirRubrica
             )
+
             val hashFinal = if (concluido) FileHasher.sha256(pdfGerado) else null
+
             val versaoAnterior = doc.caminhoArquivoFinal
 
             // ---------- 5. Grava tudo de uma vez ----------
@@ -219,7 +224,7 @@ class RoomSigningRepository @Inject constructor(
         }
     }
 
-    /** Copia a imagem da assinatura para a pasta do documento: ela fica "congelada" ali. */
+    /** Copia as imagens (assinatura e rubrica) para a pasta do documento: elas ficam "congeladas" ali. */
     private fun criarCarimbo(
         doc: DocumentEntity,
         eu: DocumentSignerEntity,
@@ -227,19 +232,23 @@ class RoomSigningRepository @Inject constructor(
         perfil: SignatureProfileEntity,
         agora: Long
     ): CarimboSnapshot {
-        val origem = when (perfil.estiloAssinatura) {
-            SignatureStyle.DESENHADA -> perfil.assinaturaPath
-            SignatureStyle.RUBRICA -> perfil.rubricaPath
-            SignatureStyle.DIGITADA -> null
-        }
-        val imagemCongelada = origem?.let { caminho ->
-            val arquivo = File(caminho)
-            if (!arquivo.exists()) return@let null
-            val pasta = File(context.filesDir, "documents/carimbos").apply { mkdirs() }
-            val destino = File(pasta, "doc${doc.id}_signer${eu.id}_$agora.png")
+        val pasta = File(context.filesDir, "documents/carimbos").apply { mkdirs() }
+
+        fun congelar(caminho: String?, tipo: String): String? {
+            val arquivo = caminho?.let { File(it) } ?: return null
+            if (!arquivo.exists()) return null
+            val destino = File(pasta, "doc${doc.id}_signer${eu.id}_${tipo}_$agora.png")
             arquivo.copyTo(destino, overwrite = true)
-            destino.absolutePath
+            return destino.absolutePath
         }
+
+        val imagemAssinatura = if (perfil.estiloAssinatura == SignatureStyle.DIGITADA) null
+        else congelar(perfil.assinaturaPath, "assinatura")
+
+        val iniciais = perfil.nomeExibicao.trim().split(Regex("\\s+"))
+            .filter { it.isNotBlank() }
+            .take(2)
+            .joinToString("") { it.first().uppercase() }
 
         return CarimboSnapshot(
             nome = perfil.nomeExibicao,
@@ -249,12 +258,13 @@ class RoomSigningRepository @Inject constructor(
             papel = eu.papel.label,
             email = usuario.email,
             estilo = perfil.estiloAssinatura,
-            imagemPath = imagemCongelada,
+            imagemPath = imagemAssinatura,
             textoDigitado = perfil.textoDigitado ?: perfil.nomeExibicao,
             assinadoEm = agora,
             dispositivo = "${Build.MANUFACTURER} ${Build.MODEL}",
-            // Código curto e único desta assinatura (documento + pessoa + momento)
-            codigo = FileHasher.shortCode(FileHasher.sha256("${doc.hashOriginal}|${usuario.id}|$agora"))
+            codigo = FileHasher.shortCode(FileHasher.sha256("${doc.hashOriginal}|${usuario.id}|$agora")),
+            rubricaPath = congelar(perfil.rubricaPath, "rubrica"),
+            iniciais = iniciais
         )
     }
 }

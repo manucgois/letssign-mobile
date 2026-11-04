@@ -55,6 +55,13 @@ fun AdminDashboardScreen(
     viewModel: AdminDashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // O documento em andamento, quando só existe um (o atalho do cabeçalho abre direto)
+    val unicoEmAndamento = state.documentos
+        .takeIf { state.filtro == FiltroDocumento.TODOS }
+        ?.singleOrNull {
+            it.document.status == DocumentStatus.ENVIADO ||
+                    it.document.status == DocumentStatus.PARCIALMENTE_ASSINADO
+        }
 
     Scaffold(
         bottomBar = bottomBar,
@@ -84,11 +91,18 @@ fun AdminDashboardScreen(
                         1 -> "1 documento"
                         else -> "$emAndamento documentos"
                     },
-                    acaoSubtitulo = if (emAndamento == 0) "Toque para enviar um novo documento"
-                    else "aguardando assinaturas",
+                    acaoSubtitulo = when {
+                        emAndamento == 0 -> "Toque para enviar um novo documento"
+                        emAndamento == 1 -> "aguardando assinaturas · toque para acompanhar"
+                        else -> "aguardando assinaturas"
+                    },
                     acaoIcone = if (emAndamento == 0) Icons.AutoMirrored.Outlined.NoteAdd else Icons.Outlined.Draw,
-                    onAcao = if (emAndamento == 0) onNewDocument
-                    else { { viewModel.onFiltro(FiltroDocumento.ANDAMENTO) } }
+                    onAcao = when {
+                        emAndamento == 0 -> onNewDocument
+                        emAndamento == 1 && unicoEmAndamento != null ->
+                        { { onOpenDocument(unicoEmAndamento.document.id) } }
+                        else -> { { viewModel.onFiltro(FiltroDocumento.ANDAMENTO) } }
+                    }
                 )
             }
 

@@ -18,7 +18,9 @@ data class CarimboSnapshot(
     val textoDigitado: String?,
     val assinadoEm: Long,
     val dispositivo: String,
-    val codigo: String
+    val codigo: String,
+    val rubricaPath: String? = null,
+    val iniciais: String = ""
 ) {
     /** Converte para texto (JSON) para salvar na coluna carimboSnapshot. */
     fun toJson(): String = JSONObject().apply {
@@ -34,6 +36,8 @@ data class CarimboSnapshot(
         put("assinadoEm", assinadoEm)
         put("dispositivo", dispositivo)
         put("codigo", codigo)
+        put("rubricaPath", rubricaPath ?: "")
+        put("iniciais", iniciais)
     }.toString()
 
     companion object {
@@ -51,7 +55,9 @@ data class CarimboSnapshot(
                 textoDigitado = o.optString("textoDigitado").ifBlank { null },
                 assinadoEm = o.getLong("assinadoEm"),
                 dispositivo = o.getString("dispositivo"),
-                codigo = o.getString("codigo")
+                codigo = o.getString("codigo"),
+                rubricaPath = o.optString("rubricaPath").ifBlank { null },
+                iniciais = o.optString("iniciais")
             )
         }
     }

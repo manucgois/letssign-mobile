@@ -26,25 +26,21 @@ class RoomSignatureProfileRepository @Inject constructor(
 
     override suspend fun saveProfile(
         profile: SignatureProfileEntity,
-        desenho: Bitmap?
+        desenho: Bitmap?,
+        rubrica: Bitmap?
     ): Result<Unit> = try {
         var toSave = profile.copy(atualizadoEm = System.currentTimeMillis())
 
-        // 1. Se houve desenho, salva a imagem e guarda o caminho no campo certo
+        // Cada imagem desenhada vai para o seu campo
         if (desenho != null) {
-            when (profile.estiloAssinatura) {
-                SignatureStyle.RUBRICA ->
-                    toSave = toSave.copy(rubricaPath = storage.save(profile.userId, "rubrica", desenho))
-                else ->
-                    toSave = toSave.copy(assinaturaPath = storage.save(profile.userId, "assinatura", desenho))
-            }
+            toSave = toSave.copy(assinaturaPath = storage.save(profile.userId, "assinatura", desenho))
+        }
+        if (rubrica != null) {
+            toSave = toSave.copy(rubricaPath = storage.save(profile.userId, "rubrica", rubrica))
         }
 
-        // 2. Salva o perfil e marca o usuário como "assinatura configurada"
         profileDao.upsert(toSave)
         userDao.setAssinaturaConfigurada(profile.userId, true)
-
-        // 3. Atualiza a sessão para o app "saber" que o perfil foi criado
         userDao.getById(profile.userId)?.let { session.start(it) }
 
         Result.success(Unit)

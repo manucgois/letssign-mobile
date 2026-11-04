@@ -286,6 +286,7 @@ class RoomDocumentRepository @Inject constructor(
         documentId: Long,
         mensagem: String?,
         idempotencyKey: String,
+        exigirRubrica: Boolean,
         simularFalha: Boolean
     ): Result<EnvioResultado> = withContext(Dispatchers.IO) {
 
@@ -324,7 +325,8 @@ class RoomDocumentRepository @Inject constructor(
                     doc.copy(
                         status = DocumentStatus.ENVIADO,
                         enviadoEm = agora,
-                        mensagemConvite = mensagem?.trim()?.ifBlank { null }
+                        mensagemConvite = mensagem?.trim()?.ifBlank { null },
+                        exigirRubrica = exigirRubrica
                     )
                 )
                 auditEventDao.insert(
